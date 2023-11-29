@@ -1,0 +1,11 @@
+stl_path = "./"
+
+# https://cad.onshape.com/documents/2357177204a18cce520a2a9c/w/8880fec68b7ff5640b6252a0/e/e5e77d28feb256a0ef937e0f 
+
+[document]
+id = "2357177204a18cce520a2a9c"
+workspace_id = "8880fec68b7ff5640b6252a0"
+
+[[part_studio]]
+display_name = "Printables"
+id = "e5e77d28feb256a0ef937e0f"
