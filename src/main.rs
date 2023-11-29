@@ -13,7 +13,7 @@ use embassy_executor::Spawner;
 use embassy_rp::{
     bind_interrupts,
     gpio::{Level, Output},
-    peripherals::{DMA_CH0, PIN_16, PIO0, UART1},
+    peripherals::{self, DMA_CH0, PIN_16, PIO0, UART1},
     pio::{InterruptHandler, Pio},
     uart::{self, BufferedInterruptHandler, BufferedUart},
 };
@@ -23,11 +23,6 @@ use panic_probe as _;
 use rgb::RGB8;
 use static_cell::make_static;
 use t800::{
-    stepper::{
-        motor_constants::MINI_8PM020S1_02001_CONSTANTS,
-        tune::tune_driver,
-        uart::{Tmc2209UartConnection, UART_BAUD_RATE},
-    },
     uart::bus::UartDevice,
     ws2812::{Ws2812Chain, Ws2812FrameProvider},
 };
@@ -53,22 +48,7 @@ async fn main(spawner: Spawner) {
         .unwrap();
 
     spawner
-        .spawn(drive_eye_steppers(
-            BufferedUart::new(
-                p.UART1,
-                Irqs,
-                p.PIN_8,
-                p.PIN_9,
-                &mut make_static!([0u8; 256])[..],
-                &mut make_static!([0u8; 256])[..],
-                {
-                    let mut cfg = uart::Config::default();
-                    cfg.baudrate = UART_BAUD_RATE;
-                    cfg
-                },
-            ),
-            p.PIN_7,
-        ))
+        .spawn(manage_eye_steppers(p.PIN_14, p.PIN_13, p.PIN_15, p.PIN_12))
         .unwrap();
 
     loop {
@@ -115,46 +95,23 @@ impl<const LED_N: usize> Ws2812FrameProvider<LED_N> for EyeLightFrameSource<LED_
 }
 
 #[embassy_executor::task]
-async fn drive_eye_steppers(
-    uart1: BufferedUart<'static, embassy_rp::peripherals::UART1>,
-    enable_pin: embassy_rp::peripherals::PIN_7,
+async fn manage_eye_steppers(
+    x_step_pin: peripherals::PIN_14,
+    _x_direction_pin: peripherals::PIN_13,
+    y_step_pin: peripherals::PIN_15,
+    _y_direction_pin: peripherals::PIN_12,
 ) -> ! {
     info!("Starting stepper management");
-    info!("Creating UART0 bus");
-    let uart0_bus: &'static Mutex<
-        CriticalSectionRawMutex,
-        BufferedUart<'static, embassy_rp::peripherals::UART1>,
-    > = make_static!({ Mutex::<CriticalSectionRawMutex, _>::new(uart1) });
 
-    info!("Disabling power stage");
-    let mut enable_power_stage_pin = Output::new(enable_pin, Level::High);
+    let mut x_step_pin = Output::new(x_step_pin, Level::Low);
+    let mut _x_direction_pin = Output::new(_x_direction_pin, Level::Low);
+    let mut y_step_pin = Output::new(y_step_pin, Level::Low);
+    let mut _y_direction_pin = Output::new(_y_direction_pin, Level::Low);
 
-    info!("Creating connection to X axis stepper driver");
-    let mut x_driver = Tmc2209UartConnection::connect(UartDevice::new(uart0_bus), 0x00)
-        .await
-        .unwrap();
-    info!("Tuning X axis stepper driver");
-    tune_driver(&mut x_driver, MINI_8PM020S1_02001_CONSTANTS)
-        .await
-        .unwrap();
-
-    // let mut y_driver = Tmc2209UartConnection::connect(UartDevice::new(uart0_bus), 0x01)
-    //     .await
-    //     .unwrap();
-    // tune_driver(&mut y_driver, MINI_8PM020S1_02001_CONSTANTS)
-    //     .await
-    //     .unwrap();
-
-    info!("Re-enabling power stage");
-    enable_power_stage_pin.set_low();
-
-    info!("Setting X axis stepper driver to static velocity");
-    let mut vactual = tmc2209::reg::VACTUAL::default();
-    vactual.set(1);
-    x_driver.write_register(vactual).await.unwrap();
-
-    let mut ticker = Ticker::every(Duration::from_hz(1));
+    let mut ticker = Ticker::every(Duration::from_millis(200));
     loop {
+        x_step_pin.toggle();
+        y_step_pin.toggle();
         ticker.next().await;
     }
 }
