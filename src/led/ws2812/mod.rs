@@ -37,7 +37,7 @@ impl<'d, PIO: Instance, const SM: usize, const LED_N: usize> Ws2812Chain<'d, PIO
     ) -> Ws2812Chain<'d, PIO, SM, LED_N> {
         into_ref!(dma);
 
-        let program_w_defines = pio_proc::pio_file!("src/ws2812/ws2812.pio");
+        let program_w_defines = pio_proc::pio_file!("src/led/ws2812/ws2812.pio");
         let program = program_w_defines.program;
         let cycles_per_bit: u32 = (program_w_defines.public_defines.T1 +
             program_w_defines.public_defines.T2 +
