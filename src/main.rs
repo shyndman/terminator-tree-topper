@@ -48,7 +48,7 @@ async fn main(spawner: Spawner) {
         .unwrap();
 
     spawner
-        .spawn(manage_eye_steppers(p.PIN_14, p.PIN_13, p.PIN_15, p.PIN_12))
+        .spawn(manage_eye_stepper(p.PIN_14, p.PIN_13))
         .unwrap();
 
     loop {
@@ -95,23 +95,39 @@ impl<const LED_N: usize> Ws2812FrameProvider<LED_N> for EyeLightFrameSource<LED_
 }
 
 #[embassy_executor::task]
-async fn manage_eye_steppers(
+async fn manage_eye_stepper(
     x_step_pin: peripherals::PIN_14,
-    _x_direction_pin: peripherals::PIN_13,
-    y_step_pin: peripherals::PIN_15,
-    _y_direction_pin: peripherals::PIN_12,
+    x_direction_pin: peripherals::PIN_13,
 ) -> ! {
     info!("Starting stepper management");
 
     let mut x_step_pin = Output::new(x_step_pin, Level::Low);
-    let mut _x_direction_pin = Output::new(_x_direction_pin, Level::Low);
-    let mut y_step_pin = Output::new(y_step_pin, Level::Low);
-    let mut _y_direction_pin = Output::new(_y_direction_pin, Level::Low);
+    let mut x_direction_pin = Output::new(x_direction_pin, Level::Low);
 
-    let mut ticker = Ticker::every(Duration::from_millis(200));
+    const STEP_PULSE_WIDTH: Duration = Duration::from_micros(400);
+    const MAX_STEP: u16 = (360 / 18) * 9;
+    let mut current_microstep: u16 = 0; // 0..320
+
+    let mut step_ticker = Ticker::every(Duration::from_hz(420));
     loop {
-        x_step_pin.toggle();
-        y_step_pin.toggle();
-        ticker.next().await;
+        if current_microstep % 5 == 0 {
+            info!("STEP ms={}", current_microstep);
+        }
+
+        x_step_pin.set_high();
+        Timer::after(STEP_PULSE_WIDTH).await;
+
+        x_step_pin.set_low();
+
+        Timer::after(STEP_PULSE_WIDTH).await;
+
+        current_microstep = (current_microstep + 1) % MAX_STEP;
+
+        if current_microstep == 0 {
+            info!("...reversing direction");
+            x_direction_pin.toggle();
+        }
+
+        step_ticker.next().await;
     }
 }
