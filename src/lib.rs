@@ -19,8 +19,9 @@ extern crate alloc;
 
 mod _global_alloc;
 
+pub mod stepper;
 pub mod time;
 pub mod uart;
-pub mod ws2812;
+pub mod led;
 
 pub fn run_tests(_: &[u8; 0]) {}

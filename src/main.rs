@@ -23,8 +23,8 @@ use panic_probe as _;
 use rgb::RGB8;
 use static_cell::make_static;
 use t800::{
+    led::{Ws2812Chain, Ws2812FrameProvider},
     uart::bus::UartDevice,
-    ws2812::{Ws2812Chain, Ws2812FrameProvider},
 };
 
 bind_interrupts!(struct Irqs {
