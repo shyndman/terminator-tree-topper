@@ -7,9 +7,10 @@ edition = "2021"
 
 [dependencies]
 embassy-embedded-hal = {package = "embassy-embedded-hal", features = ["defmt"], git = "https://github.com/embassy-rs/embassy", rev = "76f3a11"}
-embassy-sync = {package = "embassy-sync", features = ["defmt"], git = "https://github.com/embassy-rs/embassy", rev = "76f3a11"}
 embassy-executor = {package = "embassy-executor", features = ["arch-cortex-m", "defmt", "executor-thread", "integrated-timers", "nightly"], git = "https://github.com/embassy-rs/embassy", rev = "76f3a11"}
+embassy-futures = {package = "embassy-futures", git = "https://github.com/embassy-rs/embassy", rev = "76f3a11"}
 embassy-rp = {package = "embassy-rp", features = ["defmt", "unstable-traits", "nightly", "unstable-pac", "time-driver", "critical-section-impl"], git = "https://github.com/embassy-rs/embassy", rev = "76f3a11"}
+embassy-sync = {package = "embassy-sync", features = ["defmt"], git = "https://github.com/embassy-rs/embassy", rev = "76f3a11"}
 embassy-time = {package = "embassy-time", features = ["nightly", "unstable-traits", "defmt", "defmt-timestamp-uptime"], git = "https://github.com/embassy-rs/embassy", rev = "76f3a11"}
 
 anyhow = { version = "1.0", default-features = false }
@@ -28,6 +29,7 @@ embedded-io = "0.6.1"
 embedded-io-async = { version = "0.6.0", features = ["defmt-03"] }
 fixed = "1.23.1"
 fixed-macro = "1.2"
+futures = {version = "0.3.28", default-features = false, features = ["alloc"]}
 micromath = "2.1.0"
 pio = "0.2.1"
 pio-proc = "0.2"
