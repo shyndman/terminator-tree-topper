@@ -15,6 +15,17 @@ pub const MINI_8PM020S1_02001_CONSTANTS: MotorConstants = MotorConstants {
     rated_volts: 5.0,
 };
 
+/// NEMA 11: 11HS18-0674S
+pub const NEMA11_11HS18_0674S_CONSTANTS: MotorConstants = MotorConstants {
+    max_current_amps: 0.67,
+    run_current_amps: 0.5,
+    holding_torque_nm: 0.1,
+    phase_inductance_henries: 0.006,
+    phase_resistance_ohms: 6.8,
+    steps_per_rotation: 200,
+    rated_volts: 4.6,
+};
+
 pub struct MotorConstants {
     pub run_current_amps: f32,
     pub max_current_amps: f32,
