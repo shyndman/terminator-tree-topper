@@ -21,6 +21,9 @@ pub struct UartDevice<'a, M: 'static + RawMutex, P: 'static + uart::Instance> {
     bus: &'a Mutex<M, uart::BufferedUart<'a, P>>,
 }
 
+// TODO(shyndman): This is the WRONG interface for TMC2209 communication. Locks need to
+// be held across multiple operations, as we are often following a request-response model
+// when communicating with the stepper driver.
 impl<'a, M: RawMutex, P: 'static + uart::Instance> UartDevice<'a, M, P> {
     pub fn new(bus: &'a Mutex<M, uart::BufferedUart<'a, P>>) -> Self {
         Self { bus }
