@@ -4,8 +4,6 @@
 #![no_std]
 #![no_main]
 #![feature(type_alias_impl_trait)]
-#![feature(custom_test_frameworks)]
-#![test_runner(t800::run_tests)]
 
 use defmt::*;
 use defmt_rtt as _;
