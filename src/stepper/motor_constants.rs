@@ -15,6 +15,17 @@ pub const MINI_8PM020S1_02001_CONSTANTS: MotorConstants = MotorConstants {
     rated_volts: 5.0,
 };
 
+/// Miniature Stepper: GM15BY-VSM1527-100-10D
+pub const MINI_GM15BY_VSM1527_100_10D_CONSTANTS: MotorConstants = MotorConstants {
+    max_current_amps: 0.064,
+    run_current_amps: 0.03,
+    holding_torque_nm: 0.0392266,
+    phase_inductance_henries: 0.0095,
+    phase_resistance_ohms: 30.0,
+    steps_per_rotation: 2000,
+    rated_volts: 5.0,
+};
+
 /// NEMA 11: 11HS18-0674S
 pub const NEMA11_11HS18_0674S_CONSTANTS: MotorConstants = MotorConstants {
     max_current_amps: 0.67,
