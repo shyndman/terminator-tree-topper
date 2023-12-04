@@ -25,7 +25,7 @@ impl<M: RawMutex + 'static, P: 'static + uart::Instance> Tmc2209UartConnection<M
         uart_device: UartDevice<'static, M, P>,
         uart_address: u8,
     ) -> Result<Self, ErrorKind> {
-        defmt::debug!("Connecting to TMC2209 @UART{}", uart_address);
+        defmt::debug!("Connecting to TMC2209 UART bus address {}", uart_address);
 
         let mut connection = Tmc2209UartConnection {
             uart_device,
