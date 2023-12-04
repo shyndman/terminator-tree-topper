@@ -18418,44 +18418,44 @@ solid Mesh
   endfacet
   facet normal -1 0 0
     outer loop
-      vertex -111.885 0.90662 -66.0045
-      vertex -111.885 -21.2934 -53.1873
-      vertex -111.885 -18.0216 -51
-    endloop
-  endfacet
-  facet normal -1 0 0
-    outer loop
-      vertex -111.885 -21.2934 -53.1873
-      vertex -111.885 -21.2934 -47.8
-      vertex -111.885 -18.0216 -51
-    endloop
-  endfacet
-  facet normal -1 0 0
-    outer loop
-      vertex -111.885 -18.0216 -51
-      vertex -111.885 -21.2934 -47.8
-      vertex -111.885 -11.2255 -51
-    endloop
-  endfacet
-  facet normal -1 0 0
-    outer loop
-      vertex -111.885 -21.2934 -47.8
-      vertex -111.885 -4.16522 -51
-      vertex -111.885 -11.2255 -51
-    endloop
-  endfacet
-  facet normal -1 0 0
-    outer loop
-      vertex -111.885 -11.2255 -51
-      vertex -111.885 -4.16522 -51
-      vertex -111.885 0.90662 -58.0045
-    endloop
-  endfacet
-  facet normal -1 0 0
-    outer loop
-      vertex -111.885 -4.16522 -51
       vertex -111.885 0.90662 -53.9282
       vertex -111.885 0.90662 -58.0045
+      vertex -111.885 -4.16522 -51
+    endloop
+  endfacet
+  facet normal -1 0 0
+    outer loop
+      vertex -111.885 0.90662 -58.0045
+      vertex -111.885 -11.2255 -51
+      vertex -111.885 -4.16522 -51
+    endloop
+  endfacet
+  facet normal -1 0 0
+    outer loop
+      vertex -111.885 -4.16522 -51
+      vertex -111.885 -11.2255 -51
+      vertex -111.885 -21.2934 -47.8
+    endloop
+  endfacet
+  facet normal -1 0 0
+    outer loop
+      vertex -111.885 -11.2255 -51
+      vertex -111.885 -18.0216 -51
+      vertex -111.885 -21.2934 -47.8
+    endloop
+  endfacet
+  facet normal -1 0 0
+    outer loop
+      vertex -111.885 -21.2934 -47.8
+      vertex -111.885 -18.0216 -51
+      vertex -111.885 -21.2934 -53.1873
+    endloop
+  endfacet
+  facet normal -1 0 0
+    outer loop
+      vertex -111.885 -18.0216 -51
+      vertex -111.885 0.90662 -66.0045
+      vertex -111.885 -21.2934 -53.1873
     endloop
   endfacet
   facet normal -1 0 0
