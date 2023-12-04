@@ -3,7 +3,13 @@ name = "t800"
 version = "0.1.0"
 edition = "2021"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[lib]
+harness = false
+
+[[bin]]
+name = "main"
+path = "src/main.rs"
+harness = false
 
 [dependencies]
 embassy-embedded-hal = {package = "embassy-embedded-hal", features = ["defmt"], git = "https://github.com/embassy-rs/embassy", rev = "76f3a11"}
@@ -39,3 +45,6 @@ spin = {version = "0.9.8", default-features = false, features = ["lock_api", "po
 static_cell = { version = "2", features = ["nightly"]}
 talc = "3.1.1"
 tmc2209 = "0.2.2"
+
+[dev-dependencies]
+defmt-test = "0.3.1"
