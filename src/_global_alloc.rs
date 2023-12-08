@@ -4,7 +4,7 @@ use talc::*;
 // this only occurs if #[global_allocator] is used.
 // use the allocator API if you want nice things.
 
-static mut ARENA: [u8; 10000] = [0; 10000];
+static mut ARENA: [u8; 156_000] = [0; 156_000];
 
 #[global_allocator]
 static ALLOCATOR: Talck<spin::Mutex<()>, ClaimOnOom> =

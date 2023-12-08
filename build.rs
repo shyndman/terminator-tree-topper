@@ -38,4 +38,9 @@ fn main() {
     println!("cargo:rustc-link-arg-examples=-Tlink.x");
     println!("cargo:rustc-link-arg-examples=-Tlink-rp.x");
     println!("cargo:rustc-link-arg-examples=-Tdefmt.x");
+
+    println!("cargo:rustc-link-arg-tests=--nmagic");
+    println!("cargo:rustc-link-arg-tests=-Tlink.x");
+    println!("cargo:rustc-link-arg-tests=-Tlink-rp.x");
+    println!("cargo:rustc-link-arg-tests=-Tdefmt.x");
 }
