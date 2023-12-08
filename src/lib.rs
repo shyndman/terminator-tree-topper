@@ -14,9 +14,14 @@
 #![allow(unused)]
 
 extern crate alloc;
+use defmt_rtt as _;
+use panic_probe as _;
 
 mod _global_alloc;
 
+pub mod dac;
+pub mod debug;
+pub mod gpio;
 pub mod led;
 pub mod stepper;
 pub mod time;

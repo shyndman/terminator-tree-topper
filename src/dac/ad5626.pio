@@ -1,0 +1,14 @@
+.program ad5626
+.side_set 1 opt
+
+public entry_point:
+.wrap_target
+    out null, 4
+    set x, 12
+bitloop:
+    out pins, 1     side 0 [1]
+    jmp x-- bitloop side 1 [1]
+load_adc:
+    set pins, 0 [1]
+    set pins, 1 [1]
+.wrap

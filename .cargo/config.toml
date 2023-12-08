@@ -13,8 +13,11 @@ build-std = ["core", "alloc"]
 [profile.dev]
 debug = 2
 
+[profile.dev.package.cortex-m-rt]
+opt-level = 0
+
 [profile.dev.package."*"]
 opt-level = "z"
 
 [profile.release]
-debug = 1
+opt-level = 3
