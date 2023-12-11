@@ -1,4 +1,7 @@
-use defmt::{info, Display2Format, Format};
+use core::default;
+
+use dasp::sample::U12;
+use defmt::{info, trace, Display2Format, Format};
 use embassy_rp::{
     clocks, dma,
     dma::{AnyChannel, Channel, Word},
@@ -33,11 +36,15 @@ impl<'d, PIO: Instance, const SM: usize, CLEAR: gpio::Pin> Ad5626<'d, PIO, SM, C
         clock_pin: impl PioPin,
         load_pin: impl PioPin,
         clear_pin: CLEAR,
+        chip_select_pin: impl gpio::Pin,
     ) -> Ad5626<'d, PIO, SM, CLEAR> {
         into_ref!(dma);
 
-        let program_w_defines = pio_proc::pio_file!("src/dac/ad5626.pio");
-        let program = program_w_defines.program;
+        sm.clear_fifos();
+        sm.clkdiv_restart();
+        sm.restart();
+
+        let program = pio_proc::pio_file!("src/dac/ad5626.pio").program;
 
         // Pin config
         let pio_cfg = {
@@ -48,16 +55,16 @@ impl<'d, PIO: Instance, const SM: usize, CLEAR: gpio::Pin> Ad5626<'d, PIO, SM, C
             let load_pin = pio.make_pio_pin(load_pin);
 
             p.set_out_pins(&[&data_pin]);
-            p.set_set_pins(&[&load_pin]);
-            p.use_program(&pio.load_program(&program), &[&clock_pin]);
+            p.use_program(&pio.load_program(&program), &[&clock_pin, &load_pin]);
+
             sm.set_pin_dirs(
                 embassy_rp::pio::Direction::Out,
-                &[&data_pin, &load_pin, &clock_pin],
+                &[&data_pin, &clock_pin, &load_pin],
             );
 
             // Clock config, measured in kHz to avoid overflows
             let clock_freq = U24F8::from_num(clocks::clk_sys_freq());
-            p.clock_divider = clock_freq / 10_000_000;
+            p.clock_divider = clock_freq / 1_000_000;
 
             info!("AD5626 clock divider: {}", Display2Format(&p.clock_divider));
             let pio_hz: f32 = (clock_freq / p.clock_divider).to_num();
@@ -66,64 +73,49 @@ impl<'d, PIO: Instance, const SM: usize, CLEAR: gpio::Pin> Ad5626<'d, PIO, SM, C
             // FIFO config
             p.fifo_join = FifoJoin::TxOnly;
             p.shift_out = ShiftConfig {
-                auto_fill: true,
-                threshold: 16,
                 direction: ShiftDirection::Left,
+                ..Default::default()
             };
             p
         };
 
         // Clear the DAC's input register
         let mut clear_out = gpio::Output::new(clear_pin, gpio::Level::High);
-        clear_out.toggle_and_back(Duration::from_micros(1)).await;
+        Timer::after(Duration::from_micros(1)).await;
 
         // Assign config to state machine and go!
         sm.set_config(&pio_cfg);
         sm.set_enable(true);
 
-        Ad5626 {
+        let mut dac = Ad5626 {
             dma: dma.map_into(),
             clear_out,
             sm,
-        }
+        };
+
+        dac.clear();
+        dac
     }
 
-    pub async fn write(&mut self, sample: u12) {
-        let words: [u16; 1] = [sample.into()];
-        self.sm.tx().dma_push(self.dma.reborrow(), &words).await;
+    pub async fn clear(&mut self) {
+        self.clear_out
+            .toggle_and_back(Duration::from_micros(1))
+            .await;
     }
-}
 
-/// A 12-bit sample to be converted by the DAC
-#[allow(non_camel_case_types)]
-pub struct u12 {
-    pub inner: u16,
-}
-
-impl u12 {
-    pub const BITS: u8 = 12;
-
-    pub fn new(inner: u16) -> Self {
-        assert!(inner <= 0b1111_1111_1111);
-
-        Self { inner }
-    }
-}
-
-impl Format for u12 {
-    fn format(&self, fmt: defmt::Formatter) {
-        defmt::write!(
-            fmt,
-            "{:04b} {:04b} {:04b}",
-            self.inner >> 8,
-            self.inner >> 4 & 0b1111,
-            self.inner & 0b1111
+    pub async fn write(&mut self, sample: U12) {
+        let sample_u16 = sample.inner() as u16;
+        trace!("Writing ____{:012b} ({})", sample_u16, sample_u16);
+        trace!(
+            "TX level: {} stalled? {} overflowed? {} empty? {} full? {} ",
+            self.sm.tx().level(),
+            self.sm.tx().stalled(),
+            self.sm.tx().overflowed(),
+            self.sm.tx().empty(),
+            self.sm.tx().full(),
         );
-    }
-}
 
-impl From<u12> for u16 {
-    fn from(value: u12) -> Self {
-        value.inner
+        let words: [u16; 1] = [sample_u16];
+        self.sm.tx().dma_push(self.dma.reborrow(), &words).await;
     }
 }
