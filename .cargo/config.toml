@@ -9,6 +9,7 @@ DEFMT_LOG = "debug"
 
 [unstable]
 build-std = ["core", "alloc"]
+build-std-features = ["compiler-builtins-weak-intrinsics"]
 
 [profile.dev]
 debug = 2
@@ -21,3 +22,4 @@ opt-level = "z"
 
 [profile.release]
 opt-level = 3
+debug = 2

@@ -19,7 +19,7 @@ harness = false
 embassy-embedded-hal = {package = "embassy-embedded-hal", features = ["defmt"], git = "https://github.com/shyndman/embassy", rev = "76f3a11"}
 embassy-executor = {package = "embassy-executor", features = ["arch-cortex-m", "defmt", "executor-thread", "integrated-timers", "nightly"], git = "https://github.com/shyndman/embassy", rev = "76f3a11"}
 embassy-futures = {package = "embassy-futures", git = "https://github.com/shyndman/embassy", rev = "76f3a11"}
-embassy-rp = {package = "embassy-rp", features = ["defmt", "unstable-traits", "nightly", "unstable-pac", "time-driver", "critical-section-impl"], git = "https://github.com/shyndman/embassy", rev = "76f3a11"}
+embassy-rp = {package = "embassy-rp", features = ["defmt", "unstable-traits", "nightly", "unstable-pac", "time-driver", "critical-section-impl", "intrinsics", "rom-func-cache"], git = "https://github.com/shyndman/embassy", rev = "76f3a11"}
 embassy-sync = {package = "embassy-sync", features = ["defmt"], git = "https://github.com/shyndman/embassy", rev = "76f3a11"}
 embassy-time = {package = "embassy-time", features = ["nightly", "unstable-traits", "defmt", "defmt-timestamp-uptime"], git = "https://github.com/shyndman/embassy", rev = "76f3a11"}
 
