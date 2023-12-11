@@ -5,11 +5,15 @@
     async_closure,
     const_mut_refs,
     const_trait_impl,
+    coroutines,
     error_in_core,
     exclusive_range_pattern,
     try_blocks,
-    type_alias_impl_trait
+    type_alias_impl_trait,
+    proc_macro_hygiene,
+    stmt_expr_attributes
 )]
+#![allow(internal_features)]
 #![allow(incomplete_features)]
 #![allow(unused)]
 

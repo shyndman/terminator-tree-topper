@@ -32,7 +32,7 @@ cortex-m = { version = "0.7.6", features = ["inline-asm"] }
 cortex-m-rt = "0.7.0"
 panic-probe = { version = "0.3", features = ["print-defmt"] }
 
-dasp = {version = "0.11.0", default-features = false, features = ["all-no-std"]}
+dasp = { package = "dasp", default-features = false, features = ["all-no-std"], git = "https://github.com/shyndman/dasp", rev = "66e7e1a9200c93d3ce1242efce3fb112c3eef7d6"}
 embedded-hal-1 = { package = "embedded-hal", version = "1.0.0-rc.1" }
 embedded-hal-async = "1.0.0-rc.1"
 embedded-hal-bus = { version = "0.1.0-rc.1", features = ["async"] }
@@ -41,11 +41,12 @@ embedded-io-async = { version = "0.6.0", features = ["defmt-03"] }
 fixed = "1.24.0"
 fixed-macro = "1.2"
 futures = {version = "0.3.28", default-features = false}
+futures-util = { version = "0.3.29", default-features = false, features = ["async-await", "futures-macro", "unstable"] }
 micromath = "2.1.0"
 pio = "0.2.1"
 pio-proc = "0.2"
-portable-atomic = { version = "1.5", features = ["critical-section"] }
-rand = {version = "0.8.5", default-features = false, features = [ "nightly", "small_rng", ]}
+portable-atomic = { version = "1.6", features = ["critical-section"] }
+rand = {version = "0.8.5", default-features = false, features = [ "alloc", "nightly", "small_rng", ]}
 rgb = {version = "0.8", features = ["as-bytes", "grb"]}
 rustsam = {package = "rustsam", path = "/home/shyndman/dev/github.com/rustsam/"}
 spin = {version = "0.9.8", default-features = false, features = ["lock_api", "portable_atomic", "spin_mutex"]}
