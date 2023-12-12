@@ -1,6 +1,7 @@
 pub mod brightness;
 pub mod gamma;
 
+use defmt::{println, Debug2Format};
 use embassy_rp::{
     clocks,
     dma::{AnyChannel, Channel},
@@ -10,6 +11,7 @@ use embassy_rp::{
     },
     Peripheral, PeripheralRef,
 };
+use embassy_time::{Duration, Ticker, Timer};
 use fixed::types::U24F8;
 use fixed_macro::fixed;
 pub use gamma::correct_gamma;
@@ -64,7 +66,7 @@ impl<'d, PIO: Instance, const SM: usize, const LED_N: usize> Ws2812Chain<'d, PIO
             p.fifo_join = FifoJoin::TxOnly;
             p.shift_out = ShiftConfig {
                 auto_fill: true,
-                threshold: 24,
+                threshold: 32,
                 direction: ShiftDirection::Left,
             };
             p
@@ -116,10 +118,11 @@ impl<'d, PIO: Instance, const SM: usize, const LED_N: usize> Ws2812Chain<'d, PIO
 
         // DMA transfer
         self.sm.tx().dma_push(self.dma.reborrow(), &words).await;
+        Timer::after(Duration::from_micros(50)).await;
     }
 }
 
 #[inline]
 fn rgb8_to_word(red: u8, green: u8, blue: u8) -> u32 {
-    (u32::from(green) << 24) | (u32::from(red) << 16) | (u32::from(blue) << 8)
+    (u32::from(green) << 24) | (u32::from(red) << 16) | (u32::from(blue) << 8) | 0x02
 }
