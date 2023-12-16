@@ -1,3 +1,7 @@
+pub mod error;
+pub mod init;
+pub mod reg;
+
 use alloc::vec::Vec;
 
 use anyhow::{bail, Result};
@@ -8,14 +12,9 @@ use embassy_sync::blocking_mutex::raw::RawMutex;
 use embassy_time::{Duration, Timer};
 use embedded_hal_1::i2c::{AddressMode, SevenBitAddress};
 use embedded_hal_async::i2c::I2c;
-
-use crate::camera::hm0360::{init::HM0360_320X240_INIT_REGISTERS, reg::RegisterAddress};
-
-pub mod error;
-pub mod init;
-pub mod reg;
-
 use error::ErrorKind;
+use init::HM0360_DEFAULT_REGISTERS;
+use reg::RegisterAddress as Addr;
 
 const BUS_ADDRESS: u8 = 0x24;
 const RESET_WAIT_DURATION: Duration = Duration::from_millis(100);
@@ -86,7 +85,7 @@ impl<
             cfg.shift_in = pio::ShiftConfig {
                 direction: pio::ShiftDirection::Left,
                 auto_fill: true,
-                // threshold: 8,
+                threshold: 8,
                 ..Default::default()
             };
             cfg
@@ -115,13 +114,10 @@ impl<
         debug!("Verifying camera hardware identifier");
 
         let h = camera
-            .read_register(RegisterAddress::ModelIdHigh.into())
+            .read_register(Addr::ModelIdHigh.into())
             .await
             .unwrap();
-        let l = camera
-            .read_register(RegisterAddress::ModelIdLow.into())
-            .await
-            .unwrap();
+        let l = camera.read_register(Addr::ModelIdLow.into()).await.unwrap();
 
         println!("h: {:02x} l: {:02x}", h, l);
 
@@ -130,17 +126,11 @@ impl<
             "Hm0360 is the only camera supported"
         );
 
-        debug!("Configuring clock");
-
-        camera.write_register(RegisterAddress::ClockControl1.into(), 0b1111);
-
-        debug!("Clock configured");
-
         // Write load registers
 
         debug!("Writing camera hardware initialization registers");
 
-        for (reg_address, value) in HM0360_320X240_INIT_REGISTERS {
+        for (reg_address, value) in HM0360_DEFAULT_REGISTERS {
             trace!("Writing {:#X}", reg_address);
             loop {
                 match camera.write_register(reg_address, value).await {
@@ -168,7 +158,7 @@ impl<
         Ok(())
     }
 
-    pub async fn capture_frame(&mut self) -> [u8; IMAGE_BYTE_COUNT] {
+    pub async fn capture_frame(&mut self) -> [u8; 8] {
         debug!("Waiting for next frame to begin");
 
         self.vsync_in.wait_for_high().await;
@@ -177,11 +167,10 @@ impl<
         debug!("Enabling state machine");
         self.sm.clear_fifos();
 
-        self.sm.set_enable(true);
-
         debug!("Capturing frame");
 
-        let mut image_buf = [0; IMAGE_BYTE_COUNT];
+        let mut image_buf = [0; 8];
+        self.sm.set_enable(true);
         self.sm
             .rx()
             .dma_pull(self.dma.reborrow(), &mut image_buf)
