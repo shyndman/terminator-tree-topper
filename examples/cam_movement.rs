@@ -63,7 +63,7 @@ async fn main(_spawner: Spawner) {
     )
     .await;
 
-    let mut long_tick = Ticker::every(Duration::from_secs(2));
+    let mut long_tick = Ticker::every(Duration::from_secs(10));
     loop {
         let image_bytes = cam.capture_frame().await;
         println!("{:#x}", image_bytes);
