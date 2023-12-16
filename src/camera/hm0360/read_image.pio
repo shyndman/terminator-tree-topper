@@ -1,10 +1,7 @@
 .program image
 .wrap_target
-	wait 1 pin 2 // wait for hsync
-; 	set x, 7
-; bitloop:
-	wait 0 pin 1 // wait for falling pclk
+	wait 1 pin 1 // wait for hsync
+	wait 0 pin 2  // wait for falling pclk
 	in pins 1
-	wait 1 pin 1
-	; jmp x-- bitloop
+	wait 1 pin 2
 .wrap

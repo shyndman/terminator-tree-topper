@@ -18,21 +18,21 @@ const HIMAX_MD_ROI_QVGA_H: u8 = 15;
 const HIMAX_MD_ROI_QQVGA_W: u8 = 10;
 const HIMAX_MD_ROI_QQVGA_H: u8 = 8;
 
-pub const HM0360_DEFAULT_REGISTERS: [(u16, u8); 260] = [
+pub const HM0360_DEFAULT_REGISTERS: [(u16, u8); 242] = [
     (Addr::SoftwareReset as u16, 0x00),
-    (Addr::MonoMode as u16, 0x00),
+    (Addr::MonoMode as u16, 0x01),
     (Addr::MonoModeIsp as u16, 0x01),
-    (Addr::MonoModeSel as u16, 0x01),
+    (Addr::MonoModeSel as u16, 0x00),
     // BLC control
-    (0x1000, 0x01),
-    (0x1003, 0x04),
-    (Addr::BlcTgt as u16, 0x04),
+    (0x1000, 0x43),
+    (0x1003, 0x20),
+    (Addr::BlcTgt as u16, 0x20),
     (0x1007, 0x01),
-    (0x1008, 0x04),
-    (Addr::Blc2Tgt as u16, 0x04),
+    (0x1008, 0x20),
+    (Addr::Blc2Tgt as u16, 0x20),
     (Addr::MonoCtrl as u16, 0x01),
     // Output format control
-    (Addr::OpfmCtrl as u16, 0x0C),
+    (Addr::OpfmCtrl as u16, 0b0000_0100),
 
     // Reserved regs
     (0x101D, 0x00),
@@ -57,21 +57,21 @@ pub const HM0360_DEFAULT_REGISTERS: [(u16, u8); 260] = [
     (Addr::Cmprs14 as u16, 0xB2),
     (Addr::Cmprs15 as u16, 0xCC),
     (Addr::Cmprs16 as u16, 0xE6),
-    (Addr::ClockControl1 as u16, 0x08), // Core = 12MHz PCLKO = 24MHz I2C = 12MHz
+    (Addr::ClockControl1 as u16, 0xff), // Core = 12MHz PCLKO = 24MHz I2C = 12MHz
     (Addr::ClockControl2 as u16, 0x0A), // MIPI pre-dev (default)
     (Addr::ClockControl3 as u16, 0x77), // PMU/MIPI pre-dev (default)
     (Addr::PmuCfg3 as u16, 0x08),       // Disable context switching
     (Addr::AnaRegister04 as u16, 0b1000_0000),
     (Addr::AnaRegister07 as u16, 0b1100), // PCLKO_polarity falling
-    (Addr::AeCtrl as u16, 0x5F),        // Automatic Exposure (NOTE: Auto framerate enabled)
-    (Addr::AeCtrl1 as u16, 0x00),
-    (Addr::TDamping as u16, 0x20),      // AE T damping factor
-    (Addr::NDamping as u16, 0x00),      // AE N damping factor
-    (Addr::AeTargetMean as u16, 0x64),  // AE target
-    (Addr::AeMinMean as u16, 0x0A),     // AE min target mean
-    (Addr::AeTargetZone as u16, 0x23),  // AE target zone
-    (Addr::ConvergeInTh as u16, 0x03),  // AE converge in threshold
-    (Addr::ConvergeOutTh as u16, 0x05), // AE converge out threshold
+    // (Addr::AeCtrl as u16, 0x7F),        // Automatic Exposure (NOTE: Auto framerate enabled)
+    // (Addr::AeCtrl1 as u16, 0x00),
+    // (Addr::TDamping as u16, 0x20),      // AE T damping factor
+    // (Addr::NDamping as u16, 0x00),      // AE N damping factor
+    // (Addr::AeTargetMean as u16, 0x64),  // AE target
+    // (Addr::AeMinMean as u16, 0x0A),     // AE min target mean
+    // (Addr::AeTargetZone as u16, 0x23),  // AE target zone
+    // (Addr::ConvergeInTh as u16, 0x03),  // AE converge in threshold
+    // (Addr::ConvergeOutTh as u16, 0x05), // AE converge out threshold
     (
         Addr::MaxIntgH as u16,
         ((HIMAX_FRAME_LENGTH_QVGA - 4) >> 8) as u8,
@@ -80,15 +80,15 @@ pub const HM0360_DEFAULT_REGISTERS: [(u16, u8); 260] = [
         Addr::MaxIntgL as u16,
         ((HIMAX_FRAME_LENGTH_QVGA - 4) & 0xFF) as u8,
     ),
-    (Addr::MaxAgain as u16, 0x04), // Maximum analog gain
-    (Addr::MaxDgainH as u16, 0x03),
-    (Addr::MaxDgainL as u16, 0x3F),
-    (Addr::IntegrationH as u16, 0x01),
-    (Addr::IntegrationL as u16, 0x08),
-    (Addr::MdCtrl as u16, 0x6A),
-    (Addr::MdThMin as u16, 0x01),
-    (Addr::MdBlockNumTh as u16, 0x01),
-    (Addr::MdCtrl1 as u16, 0x06),
+    // (Addr::MaxAgain as u16, 0x04), // Maximum analog gain
+    // (Addr::MaxDgainH as u16, 0x03),
+    // (Addr::MaxDgainL as u16, 0x3F),
+    // (Addr::IntegrationH as u16, 0x01),
+    // (Addr::IntegrationL as u16, 0x08),
+    // (Addr::MdCtrl as u16, 0x6A),
+    // (Addr::MdThMin as u16, 0x01),
+    // (Addr::MdBlockNumTh as u16, 0x01),
+    // (Addr::MdCtrl1 as u16, 0x06),
     (Addr::PulseMode as u16, 0x00), // Interrupt in level mode.
     (Addr::RoiStartEndV as u16, 0xE0),
     (Addr::RoiStartEndH as u16, 0xF0),
