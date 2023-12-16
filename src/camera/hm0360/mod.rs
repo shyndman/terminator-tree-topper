@@ -16,6 +16,8 @@ use error::ErrorKind;
 use init::HM0360_DEFAULT_REGISTERS;
 use reg::RegisterAddress as Addr;
 
+use crate::camera::hm0360::init::HM0360_DEFAULT_REGISTERS2;
+
 const BUS_ADDRESS: u8 = 0x24;
 const RESET_WAIT_DURATION: Duration = Duration::from_millis(100);
 const IMAGE_BYTE_COUNT: usize = 320 * 240;
@@ -130,7 +132,7 @@ impl<
 
         debug!("Writing camera hardware initialization registers");
 
-        for (reg_address, value) in HM0360_DEFAULT_REGISTERS {
+        for (reg_address, value) in HM0360_DEFAULT_REGISTERS2 {
             trace!("Writing {:#X}", reg_address);
             loop {
                 match camera.write_register(reg_address, value).await {
