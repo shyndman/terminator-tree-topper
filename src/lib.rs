@@ -23,6 +23,7 @@ use panic_probe as _;
 
 mod _global_alloc;
 
+pub mod camera;
 pub mod dac;
 pub mod debug;
 pub mod gpio;
