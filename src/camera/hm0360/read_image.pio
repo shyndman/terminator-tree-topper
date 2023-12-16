@@ -1,0 +1,7 @@
+.program image
+.wrap_target
+	wait 1 pin 2 // wait for hsync
+	wait 1 pin 1 // wait for rising pclk
+	in pins 1
+	wait 0 pin 1
+.wrap
