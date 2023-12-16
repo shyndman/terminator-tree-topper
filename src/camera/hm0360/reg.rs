@@ -59,7 +59,7 @@ pub enum RegisterAddress {
     MonoCtrl = 0x100A,
 
     // VSYNC / HSYNC / pixel shift registers
-    OpfmCtrl = 0b0001_0000_0000_0000,
+    OpfmCtrl = 0x1014,
 
     // Tone mapping registers
     CmprsCtrl = 0x102F,

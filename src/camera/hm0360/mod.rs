@@ -158,7 +158,7 @@ impl<
         Ok(())
     }
 
-    pub async fn capture_frame(&mut self) -> [u8; 8] {
+    pub async fn capture_frame(&mut self) -> [u8; IMAGE_BYTE_COUNT] {
         debug!("Waiting for next frame to begin");
 
         self.vsync_in.wait_for_high().await;
@@ -169,7 +169,7 @@ impl<
 
         debug!("Capturing frame");
 
-        let mut image_buf = [0; 8];
+        let mut image_buf = [0; IMAGE_BYTE_COUNT];
         self.sm.set_enable(true);
         self.sm
             .rx()
