@@ -22,4 +22,4 @@ opt-level = "z"
 
 [profile.release]
 opt-level = 3
-# debug = 2
+debug = 2

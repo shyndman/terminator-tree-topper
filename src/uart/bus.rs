@@ -1,6 +1,5 @@
 use core::fmt::Debug;
 
-use anyhow::Result;
 use embassy_rp::uart;
 use embassy_sync::{blocking_mutex::raw::RawMutex, mutex::Mutex};
 use embedded_io::ReadExactError;

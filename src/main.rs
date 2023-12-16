@@ -4,6 +4,7 @@
 #![no_std]
 #![no_main]
 #![feature(type_alias_impl_trait)]
+#[allow(dead_code)]
 
 extern crate alloc;
 
@@ -12,10 +13,12 @@ use defmt_rtt as _;
 use embassy_executor::Spawner;
 use embassy_rp::{
     adc, bind_interrupts,
+    clocks::ClockConfig,
+    config,
     gpio::{Input, Level, Output, Pull},
     peripherals::{DMA_CH0, PIN_16, PIN_17, PIO0, UART1},
     pio::{self, Pio},
-    uart::{BufferedInterruptHandler, BufferedUart},
+    uart::{self, BufferedInterruptHandler, BufferedUart},
 };
 use embassy_sync::{
     blocking_mutex::raw::{CriticalSectionRawMutex, RawMutex},
@@ -25,14 +28,13 @@ use embassy_sync::{
 use embassy_time::{Duration, Ticker, Timer};
 use futures::{pin_mut, prelude::*};
 use panic_probe as _;
+use rand::{prelude::*, rngs::SmallRng, SeedableRng};
 use rgb::RGB8;
 use static_cell::make_static;
 use t800::{
     led::{Ws2812Chain, Ws2812FrameProvider},
     stepper::{
-        motor_constants::{
-            MINI_GM15BY_VSM1527_100_10D_CONSTANTS, NEMA11_11HS18_0674S_CONSTANTS,
-        },
+        motor_constants::NEMA11_11HS18_0674S_CONSTANTS,
         tune::tune_driver,
         uart::{Tmc2209UartConnection, UART_BAUD_RATE},
     },
@@ -50,12 +52,12 @@ type SystemEventChannel = PubSubChannel<CriticalSectionRawMutex, SystemEvent, 3,
 #[derive(Clone, Format)]
 enum SystemEvent {
     PanStepperReady,
-    EyeLedsReady,
 }
 
 type MotorCommandChannel = PubSubChannel<CriticalSectionRawMutex, MotorCommand, 3, 10, 3>;
 #[derive(Clone, Format)]
 enum MotorCommand {
+    #[allow(dead_code)]
     Home,
     TogglePower,
     LogStatus,
@@ -67,13 +69,14 @@ enum MotorCommand {
 #[embassy_executor::main]
 async fn main(spawner: Spawner) {
     info!("Start");
-    let p = embassy_rp::init(Default::default());
+    let p = embassy_rp::init(config::Config::new(ClockConfig::crystal(14_400_000)));
+
     let pio0 = Pio::new(p.PIO0, Irqs);
 
     // let mut led = Output::new(p.PIN_25, Level::High);
     // led.set_high();
 
-    Timer::after(Duration::from_secs(1)).await;
+    Timer::after(Duration::from_secs(2)).await;
 
     let system_event_channel: &mut SystemEventChannel =
         make_static!(SystemEventChannel::new());
@@ -84,46 +87,46 @@ async fn main(spawner: Spawner) {
         .spawn(manage_eye_leds(pio0, p.DMA_CH0, p.PIN_16))
         .unwrap();
 
-    // let mut adc = adc::Adc::new(p.ADC, Irqs, adc::Config::default());
-    // let mut speed_adc_channel = adc::Channel::new_pin(p.PIN_26, Pull::None);
+    let mut adc = adc::Adc::new(p.ADC, Irqs, adc::Config::default());
+    let mut speed_adc_channel = adc::Channel::new_pin(p.PIN_26, Pull::None);
 
-    // spawner
-    //     .spawn(process_velocity_input(
-    //         motor_command_channel,
-    //         adc,
-    //         speed_adc_channel,
-    //     ))
-    //     .unwrap();
+    spawner
+        .spawn(process_velocity_input(
+            motor_command_channel,
+            adc,
+            speed_adc_channel,
+        ))
+        .unwrap();
 
-    // spawner
-    //     .spawn(watch_for_pan_stepper_interrupts(
-    //         motor_command_channel,
-    //         p.PIN_5,
-    //         p.PIN_6,
-    //         p.PIN_17,
-    //     ))
-    //     .unwrap();
+    spawner
+        .spawn(watch_for_pan_stepper_interrupts(
+            motor_command_channel,
+            p.PIN_5,
+            p.PIN_6,
+            p.PIN_17,
+        ))
+        .unwrap();
 
-    // spawner
-    //     .spawn(manage_steppers(
-    //         motor_command_channel,
-    //         system_event_channel,
-    //         BufferedUart::new(
-    //             p.UART1,
-    //             Irqs,
-    //             p.PIN_8,
-    //             p.PIN_9,
-    //             &mut make_static!([0u8; 256])[..],
-    //             &mut make_static!([0u8; 256])[..],
-    //             {
-    //                 let mut cfg = uart::Config::default();
-    //                 cfg.baudrate = UART_BAUD_RATE;
-    //                 cfg
-    //             },
-    //         ),
-    //         p.PIN_7,
-    //     ))
-    //     .unwrap();
+    spawner
+        .spawn(manage_steppers(
+            motor_command_channel,
+            system_event_channel,
+            BufferedUart::new(
+                p.UART1,
+                Irqs,
+                p.PIN_8,
+                p.PIN_9,
+                &mut make_static!([0u8; 256])[..],
+                &mut make_static!([0u8; 256])[..],
+                {
+                    let mut cfg = uart::Config::default();
+                    cfg.baudrate = UART_BAUD_RATE;
+                    cfg
+                },
+            ),
+            p.PIN_7,
+        ))
+        .unwrap();
 
     loop {
         Timer::after(Duration::from_secs(60 * 60 * 24)).await;
@@ -243,15 +246,6 @@ async fn manage_steppers(
         .await
         .unwrap();
 
-    info!("Creating connection to eye stepper driver");
-    let mut eye_driver = Tmc2209UartConnection::connect(UartDevice::new(uart1_bus), 0x01)
-        .await
-        .unwrap();
-    info!("...tuning");
-    tune_driver(&mut eye_driver, MINI_GM15BY_VSM1527_100_10D_CONSTANTS)
-        .await
-        .unwrap();
-
     info!("Re-enabling power stage");
     enable_power_stage_pin.set_low();
 
@@ -264,9 +258,6 @@ async fn manage_steppers(
 
     // We don't write this value to the register until a ChangeDirection command is received
     let mut pan_vactual = tmc2209::reg::VACTUAL::default();
-
-    let mut eye_vactual = tmc2209::reg::VACTUAL::default();
-    eye_driver.write_register(eye_vactual).await.unwrap();
 
     // Indicate to the system that we are now processing motor commands
     system_event_channel
@@ -318,28 +309,28 @@ async fn manage_steppers(
                         status_reg.olb());
                     };
 
-                // log_status(
-                //     "PAN",
-                //     pan_driver
-                //         .read_register::<tmc2209::reg::DRV_STATUS>()
-                //         .await
-                //         .unwrap(),
-                //     pan_driver
-                //         .read_register::<tmc2209::reg::MSCNT>()
-                //         .await
-                //         .unwrap(),
-                // );
                 log_status(
-                    "EYE",
-                    eye_driver
+                    "PAN",
+                    pan_driver
                         .read_register::<tmc2209::reg::DRV_STATUS>()
                         .await
                         .unwrap(),
-                    eye_driver
+                    pan_driver
                         .read_register::<tmc2209::reg::MSCNT>()
                         .await
                         .unwrap(),
                 );
+                // log_status(
+                //     "EYE",
+                //     eye_driver
+                //         .read_register::<tmc2209::reg::DRV_STATUS>()
+                //         .await
+                //         .unwrap(),
+                //     eye_driver
+                //         .read_register::<tmc2209::reg::MSCNT>()
+                //         .await
+                //         .unwrap(),
+                // );
             }
         }
     }
@@ -348,14 +339,15 @@ async fn manage_steppers(
 const WHITE_EYE_COLOR: RGB8 = RGB8::new(0xFF, 0xFF, 0xFF);
 const RED_EYE_COLOR: RGB8 = RGB8::new(0xD6, 0x00, 0x1C);
 const GREEN_EYE_COLOR: RGB8 = RGB8::new(0x00, 0x87, 0x3E);
+const EYE_COLORS: [RGB8; 3] = [WHITE_EYE_COLOR, RED_EYE_COLOR, GREEN_EYE_COLOR];
 
 #[embassy_executor::task]
 async fn manage_eye_leds(pio0: Pio<'static, PIO0>, dma0: DMA_CH0, led_data_pin: PIN_16) {
     info!("Starting eye LEDs");
 
     // Number of LEDs in the string
-    const LED_N: usize = 1;
-    let mut eye_frames = EyeLightFrameSource::<LED_N>::new(RED_EYE_COLOR);
+    const LED_N: usize = 2;
+    let mut eye_frames = EyeLightFrameSource::new(SmallRng::seed_from_u64(0xdeadbee7));
 
     let Pio {
         mut common, sm0, ..
@@ -363,23 +355,37 @@ async fn manage_eye_leds(pio0: Pio<'static, PIO0>, dma0: DMA_CH0, led_data_pin: 
     let mut eye_led_chain =
         Ws2812Chain::<PIO0, 0, LED_N>::new(&mut common, sm0, dma0, led_data_pin, &eye_frames)
             .await;
+    eye_led_chain.brightness = 0x60;
 
-    let mut ticker = Ticker::every(Duration::from_hz(10));
-    eye_led_chain.draw(&eye_frames).await;
-}
-
-struct EyeLightFrameSource<const LED_N: usize> {
-    color: RGB8,
-}
-impl<const LED_N: usize> EyeLightFrameSource<LED_N> {
-    pub fn new(color: RGB8) -> Self {
-        Self { color }
+    let mut ticker = Ticker::every(Duration::from_hz(1));
+    loop {
+        eye_frames.advance();
+        eye_led_chain.draw(&eye_frames).await;
+        ticker.next().await;
     }
-    pub fn advance(&mut self) {}
 }
-impl<const LED_N: usize> Ws2812FrameProvider<LED_N> for EyeLightFrameSource<LED_N> {
-    fn frame_colors(&self) -> [RGB8; LED_N] {
-        [self.color; LED_N]
+
+struct EyeLightFrameSource {
+    rng: SmallRng,
+    eye_colors: [RGB8; 2],
+}
+impl EyeLightFrameSource {
+    pub fn new(rng: SmallRng) -> Self {
+        Self {
+            rng,
+            eye_colors: [RED_EYE_COLOR, GREEN_EYE_COLOR],
+        }
+    }
+    pub fn advance(&mut self) {
+        self.eye_colors = [
+            *EYE_COLORS.choose(&mut self.rng).unwrap(),
+            *EYE_COLORS.choose(&mut self.rng).unwrap(),
+        ];
+    }
+}
+impl Ws2812FrameProvider<2> for EyeLightFrameSource {
+    fn frame_colors(&self) -> [RGB8; 2] {
+        self.eye_colors
     }
 }
 
