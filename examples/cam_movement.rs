@@ -19,11 +19,16 @@ use embassy_rp::{
     pwm,
 };
 use embassy_sync::{blocking_mutex::raw::CriticalSectionRawMutex, mutex::Mutex};
-use embassy_time::{Duration, Ticker};
+use embassy_time::{Duration, Ticker, Timer};
 use panic_probe as _;
 use static_cell::make_static;
-use t800 as _;
-use t800::camera::hm0360::Hm0360;
+use t800::{
+    self as _,
+    camera::hm0360::{
+        reg::{InterruptClear, InterruptIndicator, RegisterAddress as Addr},
+        Hm0360,
+    },
+};
 
 bind_interrupts!(struct Irqs {
     I2C1_IRQ => i2c::InterruptHandler<I2C1>;
@@ -31,7 +36,7 @@ bind_interrupts!(struct Irqs {
 });
 
 #[embassy_executor::main]
-async fn main(_spawner: Spawner) {
+async fn main(_spawner: Spawner) -> ! {
     let p = embassy_rp::init(config::Config::new(ClockConfig::crystal(14_400_000)));
 
     let i2c1 = i2c::I2c::new_async(p.I2C1, p.PIN_15, p.PIN_14, Irqs, {
@@ -63,10 +68,38 @@ async fn main(_spawner: Spawner) {
     )
     .await;
 
-    let mut long_tick = Ticker::every(Duration::from_secs(10));
+    let mut camera_interrupt = Input::new(p.PIN_8, embassy_rp::gpio::Pull::None);
+
+    cam.set_motion_detection_threshold(0xff / 2 +10)
+        .await
+        .expect("Unable to set detection threshold");
+    cam.enable_motion_detection()
+        .await
+        .expect("Unable to enable motion detection");
+
     loop {
-        let image_bytes = cam.capture_frame().await;
-        println!("{:#x}", image_bytes);
-        long_tick.next().await;
+        camera_interrupt.wait_for_high().await;
+        println!("Interrupt!!");
+
+        let interrupt_indicator = cam
+            .read::<InterruptIndicator>()
+            .await
+            .expect("Failed to read IntIndic register");
+        println!("{}", interrupt_indicator);
+
+        if interrupt_indicator.motion_detected {
+            let motion_map = cam
+                .get_motion_map()
+                .await
+                .expect("Could not fetch motion bits");
+            println!("motion map:\n{}", motion_map);
+
+            cam.clear_motion_detection()
+                .await
+                .expect("Failed to clear motion interrupt bit");
+            println!("...reset");
+        } else {
+            Timer::after(Duration::from_secs(1)).await;
+        }
     }
 }

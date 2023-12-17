@@ -6,6 +6,7 @@ use anyhow::anyhow;
 pub enum ErrorKind {
     ConnectionFailed,
     I2c,
+    StateError,
 }
 impl Display for ErrorKind {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {

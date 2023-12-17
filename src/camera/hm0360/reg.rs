@@ -9,6 +9,7 @@ pub trait Register: bondrewd::Bitfields<REG_SIZE> {
 pub trait WritableRegister: Register + Default {}
 
 #[repr(u16)]
+#[derive(defmt::Format)]
 pub enum RegisterAddress {
     ModelIdHigh = 0x0000,
     ModelIdLow = 0x0001,
@@ -124,7 +125,7 @@ pub enum RegisterAddress {
     PulseThH = 0x2062,
     PulseThL = 0x2063,
     IntIndic = 0x2064,
-    IntClear = 0x2065,
+    ClearInterrupts = 0x2065,
     // Motion detection control
     MdCtrl = 0x2080,
     RoiStartEndV = 0x2081,
@@ -148,7 +149,6 @@ pub enum RegisterAddress {
     // IO and clock control
     AnaRegister04 = 0x310F,
     AnaRegister07 = 0x3112,
-
     // Unnamed(u16) = 0xffff,
 }
 impl Into<u16> for RegisterAddress {
@@ -200,6 +200,77 @@ impl Register for ClockControl1Register {
     }
 }
 
+#[derive(Bitfields, Clone, PartialEq)]
+#[bondrewd(default_endianness = "be", enforce_bytes = 1)]
+#[derive(defmt::Format)]
+pub struct InterruptIndicator {
+    #[bondrewd(bit_length = 1)]
+    pub motion_detect_flicker_flag: bool,
+    #[bondrewd(bit_length = 1)]
+    pub ae_converge: bool,
+    #[bondrewd(bit_length = 1)]
+    pub early_vsync: bool,
+    #[bondrewd(bit_length = 1)]
+    pub motion_detect_flicker: bool,
+    #[bondrewd(bit_length = 1)]
+    pub motion_detected: bool,
+    #[bondrewd(bit_length = 1)]
+    pub auto_exposure: bool,
+    #[bondrewd(bit_length = 1)]
+    pub auto_exposure_stats_ready: bool,
+    #[bondrewd(bit_length = 1)]
+    pub auto_exposure_non_convergence: bool,
+}
+impl Register for InterruptIndicator {
+    fn address() -> RegisterAddress {
+        RegisterAddress::IntIndic
+    }
+}
+
+#[derive(Bitfields, Clone, PartialEq)]
+#[bondrewd(default_endianness = "be", enforce_bytes = 1)]
+#[derive(defmt::Format)]
+pub struct InterruptClear {
+    #[bondrewd(bit_length = 2, reserve)]
+    reserved: u8,
+    #[bondrewd(bit_length = 1)]
+    pub early_vsync: bool,
+    #[bondrewd(bit_length = 1)]
+    pub motion_detect_flicker: bool,
+    #[bondrewd(bit_length = 1)]
+    pub motion_detected: bool,
+    #[bondrewd(bit_length = 1)]
+    pub auto_exposure: bool,
+    #[bondrewd(bit_length = 1)]
+    pub auto_exposure_stats_ready: bool,
+    #[bondrewd(bit_length = 1)]
+    pub auto_exposure_non_convergence: bool,
+}
+impl InterruptClear {
+    pub fn clear_all() -> Self {
+        Self {
+            reserved: 0,
+            early_vsync: true,
+            motion_detect_flicker: true,
+            motion_detected: true,
+            auto_exposure: true,
+            auto_exposure_stats_ready: true,
+            auto_exposure_non_convergence: true,
+        }
+    }
+}
+impl Register for InterruptClear {
+    fn address() -> RegisterAddress {
+        RegisterAddress::ClearInterrupts
+    }
+}
+impl WritableRegister for InterruptClear {}
+impl Default for InterruptClear {
+    fn default() -> Self {
+        Self::clear_all()
+    }
+}
+
 #[derive(PartialEq, Clone, BitfieldEnum)]
 #[bondrewd_enum(u8, bit_length = 3)]
 #[derive(defmt::Format)]
@@ -233,3 +304,21 @@ pub enum SensorCoreDivider {
     Four = 0b10,
     Eight = 0b11,
 }
+
+pub const HIMAX_LINE_LEN_PCK_VGA: u16 = 0x300;
+pub const HIMAX_FRAME_LENGTH_VGA: u16 = 0x214;
+
+pub const HIMAX_LINE_LEN_PCK_QVGA: u16 = 0x178;
+pub const HIMAX_FRAME_LENGTH_QVGA: u16 = 0x109;
+
+pub const HIMAX_LINE_LEN_PCK_QQVGA: u16 = 0x178;
+pub const HIMAX_FRAME_LENGTH_QQVGA: u16 = 0x084;
+
+pub const HIMAX_MD_ROI_VGA_W: u8 = 40;
+pub const HIMAX_MD_ROI_VGA_H: u8 = 30;
+
+pub const HIMAX_MD_ROI_QVGA_W: u8 = 20;
+pub const HIMAX_MD_ROI_QVGA_H: u8 = 15;
+
+pub const HIMAX_MD_ROI_QQVGA_W: u8 = 10;
+pub const HIMAX_MD_ROI_QQVGA_H: u8 = 8;
