@@ -20,9 +20,11 @@ use self::reg::{
     Register, WritableRegister, HIMAX_MD_ROI_QQVGA_H, HIMAX_MD_ROI_QQVGA_W,
     HIMAX_MD_ROI_QVGA_H, HIMAX_MD_ROI_QVGA_W, HIMAX_MD_ROI_VGA_H, HIMAX_MD_ROI_VGA_W,
 };
-use crate::camera::hm0360::init::HM0360_DEFAULT_REGISTERS2;
+use crate::camera::hm0360::{init::HM0360_DEFAULT_REGISTERS2, reg::ModeSelectRegister};
 
-const BUS_ADDRESS: u8 = 0x24;
+pub const BUS_ADDRESS_DEFAULT: SevenBitAddress = 0x24;
+pub const BUS_ADDRESS_ALT1: SevenBitAddress = 0x25;
+
 const RESET_WAIT_DURATION: Duration = Duration::from_millis(100);
 const IMAGE_BYTE_COUNT: usize = 320 * 240;
 
@@ -32,85 +34,23 @@ pub struct Hm0360<
     'd,
     M: RawMutex + 'static,
     B: i2c::Instance + 'static,
-    Address: AddressMode,
-    PIO: pio::Instance,
-    const SM: usize,
-    Vsync: gpio::Pin,
-    Reset: gpio::Pin,
+    I2cAddress: AddressMode,
 > {
     i2c_device: I2cDevice<'d, M, i2c::I2c<'d, B, i2c::Async>>,
-    i2c_address: Address,
-    dma: PeripheralRef<'d, dma::AnyChannel>,
-    sm: pio::StateMachine<'d, PIO, SM>,
-    vsync_in: gpio::Input<'d, Vsync>,
-    reset_out: gpio::Output<'d, Reset>,
+    i2c_address: I2cAddress,
 }
 
-impl<
-        M: RawMutex + 'static,
-        B: i2c::Instance + 'static,
-        PIO: pio::Instance + 'static,
-        const SM: usize,
-        Vsync: gpio::Pin,
-        Reset: gpio::Pin,
-    > Hm0360<'static, M, B, SevenBitAddress, PIO, SM, Vsync, Reset>
+impl<M: RawMutex + 'static, B: i2c::Instance + 'static>
+    Hm0360<'static, M, B, SevenBitAddress>
 {
     pub async fn new(
         mut i2c_device: I2cDevice<'static, M, i2c::I2c<'static, B, i2c::Async>>,
-        pio: &mut pio::Common<'static, PIO>,
-        mut sm: pio::StateMachine<'static, PIO, SM>,
-        dma: impl Peripheral<P = impl dma::Channel> + 'static,
-        serial_data_pin: impl pio::PioPin,
-        hsync_pin: impl pio::PioPin,
-        pixel_clock_pin: impl pio::PioPin,
-        vsync_pin: Vsync,
-        reset_pin: Reset,
+        i2c_address: SevenBitAddress,
     ) -> Self {
-        into_ref!(dma);
-
-        sm.clear_fifos();
-        sm.clkdiv_restart();
-        sm.restart();
-
-        let program = pio_proc::pio_file!("src/camera/hm0360/read_image.pio").program;
-        let pio_cfg = {
-            let mut cfg = pio::Config::default();
-
-            // Pin config
-            let serial_data_pin = pio.make_pio_pin(serial_data_pin);
-            let hsync_pin = pio.make_pio_pin(hsync_pin);
-            let pixel_clock_pin = pio.make_pio_pin(pixel_clock_pin);
-
-            let input_pins = [&serial_data_pin, &hsync_pin, &pixel_clock_pin];
-            cfg.set_in_pins(&input_pins);
-            sm.set_pin_dirs(pio::Direction::In, &input_pins);
-            cfg.use_program(&pio.load_program(&program), &[]);
-
-            // FIFO config
-            cfg.fifo_join = pio::FifoJoin::RxOnly;
-            cfg.shift_in = pio::ShiftConfig {
-                direction: pio::ShiftDirection::Left,
-                auto_fill: true,
-                threshold: 8,
-                ..Default::default()
-            };
-            cfg
-        };
-
-        // Configure the state machine, but do not start running until the first frame
-        // is requested
-        sm.set_config(&pio_cfg);
-        sm.set_enable(false);
-
         // Build a new camera and initialize
-
         let mut camera = Self {
             i2c_device,
-            i2c_address: BUS_ADDRESS,
-            dma: dma.map_into(),
-            sm,
-            vsync_in: gpio::Input::new(vsync_pin, gpio::Pull::Down),
-            reset_out: gpio::Output::new(reset_pin, gpio::Level::Low),
+            i2c_address,
         };
 
         camera.reset().await.unwrap();
@@ -153,36 +93,19 @@ impl<
     pub async fn reset(&mut self) -> Result<()> {
         debug!("Triggering camera reset");
 
-        self.reset_out.set_low();
         Timer::after(RESET_WAIT_DURATION).await;
-        self.reset_out.set_high();
+        self.write_raw(Addr::SoftwareReset, 0x01).await;
         Timer::after(RESET_WAIT_DURATION).await;
+
+        loop {
+            if self.read::<ModeSelectRegister>().await?.mode == reg::Mode::Standby {
+                break;
+            }
+
+            Timer::after(RESET_WAIT_DURATION).await;
+        }
 
         Ok(())
-    }
-
-    pub async fn capture_frame(&mut self) -> [u8; IMAGE_BYTE_COUNT] {
-        debug!("Waiting for next frame to begin");
-
-        self.vsync_in.wait_for_high().await;
-        self.vsync_in.wait_for_low().await;
-
-        debug!("Enabling state machine");
-        self.sm.clear_fifos();
-        self.sm.set_enable(true);
-
-        debug!("Capturing frame");
-
-        let mut image_buf = [0; IMAGE_BYTE_COUNT];
-        self.sm
-            .rx()
-            .dma_pull(self.dma.reborrow(), &mut image_buf)
-            .await;
-        self.sm.set_enable(false);
-
-        debug!("Captured!");
-
-        image_buf
     }
 
     pub async fn set_motion_detection_threshold(&mut self, threshold: u8) -> Result<()> {
@@ -234,6 +157,13 @@ impl<
         let reg = self.read_raw(Addr::MdCtrl).await?;
         self.write_raw(Addr::MdCtrl, reg | 1).await;
         Ok(())
+    }
+
+    pub async fn is_motion_detected(&mut self) -> Result<bool> {
+        Ok(self
+            .read::<reg::InterruptIndicator>()
+            .await?
+            .motion_detected)
     }
 
     pub async fn clear_motion_detection(&mut self) -> Result<()> {

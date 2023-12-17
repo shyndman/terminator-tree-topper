@@ -289,7 +289,8 @@ pub const HM0360_DEFAULT_REGISTERS: [(u16, u8); 242] = [
     (Addr::CommandUpdate as u16, 0x01),
 ];
 
-pub const HM0360_DEFAULT_REGISTERS2: [(u16, u8); 519] = [
+pub const HM0360_DEFAULT_REGISTERS2: [(u16, u8); 520] = [
+    (Addr::SoftwareReset as u16, 0x00),
     (Addr::ClockControl1 as u16, 0b0111_0111), // Core = 12MHz PCLKO = 24MHz I2C = 12MHz
     (Addr::ClockControl2 as u16, 0x0A),        // MIPI pre-dev (default)
     (Addr::ClockControl3 as u16, 0x77),        // PMU/MIPI pre-dev (default)
