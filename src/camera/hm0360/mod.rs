@@ -5,9 +5,13 @@ pub mod reg;
 use alloc::vec::Vec;
 
 use anyhow::{bail, Result};
-use defmt::{debug, error, println, trace};
+use defmt::{debug, error, println, trace, warn, Debug2Format};
 use embassy_embedded_hal::shared_bus::{asynch::i2c::I2cDevice, I2cDeviceError};
-use embassy_rp::{dma, gpio, i2c, into_ref, pio, Peripheral, PeripheralRef};
+use embassy_rp::{
+    dma,
+    gpio::{self, Level, Output},
+    i2c, into_ref, pio, Peripheral, PeripheralRef,
+};
 use embassy_sync::blocking_mutex::raw::RawMutex;
 use embassy_time::{Duration, Timer};
 use embedded_hal_1::i2c::{AddressMode, SevenBitAddress};
@@ -35,34 +39,38 @@ pub struct Hm0360<
     M: RawMutex + 'static,
     B: i2c::Instance + 'static,
     I2cAddress: AddressMode,
+    Reset: gpio::Pin,
 > {
     i2c_device: I2cDevice<'d, M, i2c::I2c<'d, B, i2c::Async>>,
     i2c_address: I2cAddress,
+    reset_out: Output<'static, Reset>,
 }
 
-impl<M: RawMutex + 'static, B: i2c::Instance + 'static>
-    Hm0360<'static, M, B, SevenBitAddress>
+impl<M: RawMutex + 'static, B: i2c::Instance + 'static, Reset: gpio::Pin>
+    Hm0360<'static, M, B, SevenBitAddress, Reset>
 {
     pub async fn new(
         mut i2c_device: I2cDevice<'static, M, i2c::I2c<'static, B, i2c::Async>>,
         i2c_address: SevenBitAddress,
+        reset_pin: Reset,
     ) -> Self {
+        debug!("Creating new camera @ {}", i2c_address);
+
         // Build a new camera and initialize
         let mut camera = Self {
             i2c_device,
             i2c_address,
+            reset_out: Output::new(reset_pin, Level::High),
         };
 
         camera.reset().await.unwrap();
 
         // Read the device's identifier
 
-        debug!("Verifying camera hardware identifier");
+        trace!("Verifying camera hardware identifier");
 
         let h = camera.read_raw(Addr::ModelIdHigh).await.unwrap();
         let l = camera.read_raw(Addr::ModelIdLow).await.unwrap();
-
-        println!("h: {:02x} l: {:02x}", h, l);
 
         assert!(
             h == 0x03 && l == 0x60,
@@ -71,7 +79,7 @@ impl<M: RawMutex + 'static, B: i2c::Instance + 'static>
 
         // Write load registers
 
-        debug!("Writing camera hardware initialization registers");
+        trace!("Writing camera hardware initialization registers");
 
         for (reg_address, value) in HM0360_DEFAULT_REGISTERS2 {
             trace!("Writing {:#X}", reg_address);
@@ -85,25 +93,20 @@ impl<M: RawMutex + 'static, B: i2c::Instance + 'static>
             }
         }
 
-        debug!("Done writing init registers");
+        trace!("Done writing init registers");
 
         camera
     }
 
     pub async fn reset(&mut self) -> Result<()> {
-        debug!("Triggering camera reset");
+        trace!("Triggering camera reset");
 
+        self.reset_out.set_high();
         Timer::after(RESET_WAIT_DURATION).await;
-        self.write_raw(Addr::SoftwareReset, 0x01).await;
+        self.reset_out.set_low();
         Timer::after(RESET_WAIT_DURATION).await;
-
-        loop {
-            if self.read::<ModeSelectRegister>().await?.mode == reg::Mode::Standby {
-                break;
-            }
-
-            Timer::after(RESET_WAIT_DURATION).await;
-        }
+        self.reset_out.set_high();
+        Timer::after(RESET_WAIT_DURATION).await;
 
         Ok(())
     }
@@ -174,8 +177,6 @@ impl<M: RawMutex + 'static, B: i2c::Instance + 'static>
         let mut buf = self
             .read_raw_n::<u16, ROI_BYTE_COUNT>(0x20A1 as u16)
             .await?;
-
-        println!("{:b}", buf);
         buf.reverse();
 
         Ok(SliceMotionMap::new(ROI_COLUMN_COUNT, ROI_ROW_COUNT, buf))
@@ -183,10 +184,7 @@ impl<M: RawMutex + 'static, B: i2c::Instance + 'static>
 
     pub async fn read<R: Register + defmt::Format>(&mut self) -> Result<R> {
         match self.read_raw(R::address()).await {
-            Ok(val) => {
-                debug!("value: {:#b}", val);
-                Ok(R::from_bytes([val]))
-            }
+            Ok(val) => Ok(R::from_bytes([val])),
             Err(e) => {
                 bail!(e)
             }
@@ -197,7 +195,6 @@ impl<M: RawMutex + 'static, B: i2c::Instance + 'static>
         &mut self,
         reg_address: A,
     ) -> Result<u8> {
-        debug!("read_raw {:#X}", reg_address);
         let buf = self.read_raw_n::<A, 1>(reg_address).await?;
         Ok(buf[0])
     }
@@ -206,7 +203,7 @@ impl<M: RawMutex + 'static, B: i2c::Instance + 'static>
         &mut self,
         reg_address: A,
     ) -> Result<[u8; LEN]> {
-        debug!("read_raw_n {:#X} len={}", reg_address, LEN);
+        trace!("read_raw_n {:#X} len={}", reg_address, LEN);
         let a = (reg_address.into() as u16).to_be_bytes();
         let mut buf = [0u8; LEN];
         match self
@@ -215,18 +212,17 @@ impl<M: RawMutex + 'static, B: i2c::Instance + 'static>
             .await
         {
             Ok(()) => {
-                debug!("value: {:#b}", buf);
+                trace!("value: {:#b}", buf);
                 Ok(buf)
             }
             Err(e) => {
-                error!("error encountered: {}", e);
+                trace!("error encountered: {}", e);
                 bail!(ErrorKind::I2c)
             }
         }
     }
 
     pub async fn write<R: WritableRegister + defmt::Format>(&mut self, reg: R) -> Result<()> {
-        debug!("write_register {}", reg);
         self.write_raw(R::address(), reg.into_bytes()[0]).await?;
         Ok(())
     }
@@ -236,14 +232,17 @@ impl<M: RawMutex + 'static, B: i2c::Instance + 'static>
         reg_address: A,
         value: u8,
     ) -> Result<()> {
-        debug!("write_register {:#X} {:b}", reg_address, value);
+        trace!("write_register {:#X} {:b}", reg_address, value);
 
         let a = (reg_address.into() as u16).to_be_bytes();
         let mut write = [a[0], a[1], value];
         match self.i2c_device.write(self.i2c_address, &write).await {
-            Ok(()) => Ok(()),
+            Ok(()) => {
+                trace!("write success");
+                Ok(())
+            }
             Err(e) => {
-                error!("error encountered: {}", e);
+                trace!("error encountered: {}", e);
                 bail!(ErrorKind::I2c);
             }
         }
@@ -251,46 +250,64 @@ impl<M: RawMutex + 'static, B: i2c::Instance + 'static>
 }
 
 /// Origin is bottom-left
-pub trait MotionMap: core::ops::Index<(u8, u8), Output = bool> + defmt::Format {}
+pub trait MotionMap: core::ops::Index<(usize, usize), Output = bool> + defmt::Format {
+    fn width(&self) -> usize;
+    fn height(&self) -> usize;
+
+    fn format(&self, fmt: defmt::Formatter) {
+        for y in (0..self.height()).rev() {
+            let i = (y * 2) as usize;
+            for x in 0..self.width() {
+                let val = self[(x, y)];
+                defmt::write!(fmt, "{}", val as u8);
+            }
+
+            if y + 1 <= self.height() {
+                defmt::write!(fmt, "\n");
+            }
+        }
+    }
+}
 
 const ROI_BYTE_COUNT: usize = (0x20C0 - 0x20A1) + 1;
-const ROI_COLUMN_COUNT: u8 = 16;
-const ROI_ROW_COUNT: u8 = 16;
+const ROI_COLUMN_COUNT: usize = 16;
+const ROI_ROW_COUNT: usize = 16;
 
 pub struct SliceMotionMap {
-    pub width: u8,
-    pub height: u8,
+    pub width: usize,
+    pub height: usize,
     buf: [u8; ROI_BYTE_COUNT],
 }
 
 impl SliceMotionMap {
-    fn new(width: u8, height: u8, buf: [u8; ROI_BYTE_COUNT]) -> Self {
+    fn new(width: usize, height: usize, buf: [u8; ROI_BYTE_COUNT]) -> Self {
         Self { width, height, buf }
     }
+}
 
-    pub fn width(&self) -> u8 {
+impl MotionMap for SliceMotionMap {
+    fn width(&self) -> usize {
         self.width
     }
 
-    pub fn height(&self) -> u8 {
+    fn height(&self) -> usize {
         self.height
     }
 }
 
-impl MotionMap for SliceMotionMap {}
-impl core::ops::Index<(u8, u8)> for SliceMotionMap {
+impl core::ops::Index<(usize, usize)> for SliceMotionMap {
     type Output = bool;
 
-    fn index(&self, index: (u8, u8)) -> &Self::Output {
+    fn index(&self, index: (usize, usize)) -> &Self::Output {
         let (x, y) = index;
-        defmt::assert!(x < self.width, "x is out of range, {}", x);
-        defmt::assert!(y < self.height, "y is out of range, {}", x);
+        defmt::assert!(x < self.width(), "x is out of range, {}", x);
+        defmt::assert!(y < self.height(), "y is out of range, {}", x);
 
         let bit_index = y * self.width + x;
         let byte_index = bit_index / 8;
         let lsb_bit_in_bucket_index = bit_index % 8;
 
-        let lsb_bucket = self.buf[byte_index as usize].reverse_bits(); // reverse the bits to lsb-bit
+        let lsb_bucket = self.buf[byte_index].reverse_bits(); // reverse the bits to lsb-bit
 
         let mask = 1 << lsb_bit_in_bucket_index;
         let has_motion = (lsb_bucket & mask) >> lsb_bit_in_bucket_index == 1;
@@ -304,14 +321,6 @@ impl core::ops::Index<(u8, u8)> for SliceMotionMap {
 
 impl defmt::Format for SliceMotionMap {
     fn format(&self, fmt: defmt::Formatter) {
-        for y in (0..self.height).rev() {
-            let i = (y * 2) as usize;
-            // println!("y: {} i: {}", y, i);
-            let (row_l, row_h) = (self.buf[i], self.buf[i + 1]);
-            defmt::write!(fmt, "{:08b}{:08b}", row_l, row_h);
-            if y + 1 <= self.height {
-                defmt::write!(fmt, "\n");
-            }
-        }
+        MotionMap::format(self, fmt);
     }
 }

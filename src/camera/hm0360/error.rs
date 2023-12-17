@@ -14,9 +14,3 @@ impl Display for ErrorKind {
     }
 }
 impl Error for ErrorKind {}
-
-impl Into<anyhow::Error> for ErrorKind {
-    fn into(self) -> anyhow::Error {
-        anyhow!(self)
-    }
-}
