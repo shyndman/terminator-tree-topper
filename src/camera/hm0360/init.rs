@@ -1,22 +1,6 @@
-use super::reg::{Mode, RegisterAddress as Addr};
-
-const HIMAX_LINE_LEN_PCK_VGA: u16 = 0x300;
-const HIMAX_FRAME_LENGTH_VGA: u16 = 0x214;
-
-const HIMAX_LINE_LEN_PCK_QVGA: u16 = 0x178;
-const HIMAX_FRAME_LENGTH_QVGA: u16 = 0x109;
-
-const HIMAX_LINE_LEN_PCK_QQVGA: u16 = 0x178;
-const HIMAX_FRAME_LENGTH_QQVGA: u16 = 0x084;
-
-const HIMAX_MD_ROI_VGA_W: u8 = 40;
-const HIMAX_MD_ROI_VGA_H: u8 = 30;
-
-const HIMAX_MD_ROI_QVGA_W: u8 = 20;
-const HIMAX_MD_ROI_QVGA_H: u8 = 15;
-
-const HIMAX_MD_ROI_QQVGA_W: u8 = 10;
-const HIMAX_MD_ROI_QQVGA_H: u8 = 8;
+use super::reg::{
+    Mode, RegisterAddress as Addr, HIMAX_FRAME_LENGTH_QVGA, HIMAX_LINE_LEN_PCK_QVGA,
+};
 
 pub const HM0360_DEFAULT_REGISTERS: [(u16, u8); 242] = [
     (Addr::SoftwareReset as u16, 0x00),
@@ -277,7 +261,7 @@ pub const HM0360_DEFAULT_REGISTERS: [(u16, u8); 242] = [
     (0x3126, 0x03),
     (0x3128, 0x57),
     (0x312A, 0x11),
-    (0x312B, 0x41),
+    (0x312B, 0x40),
     (0x312E, 0x00),
     (0x312F, 0x00),
     (0x3130, 0x0C),
@@ -307,9 +291,9 @@ pub const HM0360_DEFAULT_REGISTERS: [(u16, u8); 242] = [
 
 pub const HM0360_DEFAULT_REGISTERS2: [(u16, u8); 519] = [
     (Addr::ClockControl1 as u16, 0b0111_0111), // Core = 12MHz PCLKO = 24MHz I2C = 12MHz
-    (Addr::ClockControl2 as u16, 0x0A), // MIPI pre-dev (default)
-    (Addr::ClockControl3 as u16, 0x77), // PMU/MIPI pre-dev (default)
-    (0x0350, 0xE0), //?not in datasheet
+    (Addr::ClockControl2 as u16, 0x0A),        // MIPI pre-dev (default)
+    (Addr::ClockControl3 as u16, 0x77),        // PMU/MIPI pre-dev (default)
+    (0x0350, 0xE0),                            //?not in datasheet
     (0x0370, 0x01),
     (0x0371, 0x01),
     (0x0372, 0x00),
