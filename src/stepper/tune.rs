@@ -55,7 +55,7 @@ pub async fn tune_driver<M: RawMutex + 'static, P: uart::Instance>(
         chopconf.set_dedge(true);
         driver.write_register(chopconf).await?;
 
-        // Stallguard
+        // Automatic stealthchop <-> spreadcycle switching
         let mut tpwnthrs = tmc2209::reg::TPWMTHRS::default();
         // tpwnthrs.set(0xfffff); // This keeps the stepper in SpreadCycle mode
         tpwnthrs.set(0); // This keeps the stepper in StealthChop mode
@@ -63,9 +63,10 @@ pub async fn tune_driver<M: RawMutex + 'static, P: uart::Instance>(
 
         // Coolstep
         let mut tcoolthrs = tmc2209::reg::TCOOLTHRS::default();
-        tcoolthrs.set(293);
+        tcoolthrs.set(2_u32.pow(20) - 1);
         driver.write_register(tcoolthrs).await?;
 
+        // Stallguard
         let mut sgthrs = tmc2209::reg::SGTHRS::default();
         sgthrs.0 = 0xff;
         driver.write_register(sgthrs).await?;
