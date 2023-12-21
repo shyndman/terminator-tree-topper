@@ -54,7 +54,7 @@ impl<M: RawMutex + 'static, B: i2c::Instance + 'static, Reset: gpio::Pin>
         i2c_address: SevenBitAddress,
         reset_pin: Reset,
     ) -> Self {
-        debug!("Creating new camera @ {}", i2c_address);
+        debug!("[{:#x}] Creating new camera", i2c_address);
 
         // Build a new camera and initialize
         let mut camera = Self {
@@ -67,7 +67,7 @@ impl<M: RawMutex + 'static, B: i2c::Instance + 'static, Reset: gpio::Pin>
 
         // Read the device's identifier
 
-        trace!("Verifying camera hardware identifier");
+        trace!("[{:#x}] Verifying camera hardware identifier", i2c_address);
 
         let h = camera.read_raw(Addr::ModelIdHigh).await.unwrap();
         let l = camera.read_raw(Addr::ModelIdLow).await.unwrap();
@@ -79,7 +79,10 @@ impl<M: RawMutex + 'static, B: i2c::Instance + 'static, Reset: gpio::Pin>
 
         // Write load registers
 
-        trace!("Writing camera hardware initialization registers");
+        trace!(
+            "[{:#x}] Writing camera hardware initialization registers",
+            i2c_address
+        );
 
         for (reg_address, value) in HM0360_DEFAULT_REGISTERS2 {
             trace!("Writing {:#X}", reg_address);
@@ -87,19 +90,19 @@ impl<M: RawMutex + 'static, B: i2c::Instance + 'static, Reset: gpio::Pin>
                 match camera.write_raw(reg_address, value).await {
                     Ok(_) => break,
                     Err(e) => {
-                        trace!("Retrying");
+                        trace!("[{:#x}] Retrying", i2c_address);
                     }
                 }
             }
         }
 
-        trace!("Done writing init registers");
+        trace!("[{:#x}] Done writing init registers", i2c_address);
 
         camera
     }
 
     pub async fn reset(&mut self) -> Result<()> {
-        trace!("Triggering camera reset");
+        trace!("[{:#x}] Triggering camera reset", self.i2c_address);
 
         self.reset_out.set_high();
         Timer::after(RESET_WAIT_DURATION).await;
@@ -203,7 +206,12 @@ impl<M: RawMutex + 'static, B: i2c::Instance + 'static, Reset: gpio::Pin>
         &mut self,
         reg_address: A,
     ) -> Result<[u8; LEN]> {
-        trace!("read_raw_n {:#X} len={}", reg_address, LEN);
+        trace!(
+            "[{:#x}] read_raw_n {:#X} len={}",
+            self.i2c_address,
+            reg_address,
+            LEN
+        );
         let a = (reg_address.into() as u16).to_be_bytes();
         let mut buf = [0u8; LEN];
         match self
@@ -212,11 +220,11 @@ impl<M: RawMutex + 'static, B: i2c::Instance + 'static, Reset: gpio::Pin>
             .await
         {
             Ok(()) => {
-                trace!("value: {:#b}", buf);
+                trace!("[{:#x}] value: {:#b}", self.i2c_address, buf);
                 Ok(buf)
             }
             Err(e) => {
-                trace!("error encountered: {}", e);
+                trace!("[{:#x}] error encountered: {}", self.i2c_address, e);
                 bail!(ErrorKind::I2c)
             }
         }
@@ -232,17 +240,22 @@ impl<M: RawMutex + 'static, B: i2c::Instance + 'static, Reset: gpio::Pin>
         reg_address: A,
         value: u8,
     ) -> Result<()> {
-        trace!("write_register {:#X} {:b}", reg_address, value);
+        trace!(
+            "[{:#x}] write_register {:#X} {:b}",
+            self.i2c_address,
+            reg_address,
+            value
+        );
 
         let a = (reg_address.into() as u16).to_be_bytes();
         let mut write = [a[0], a[1], value];
         match self.i2c_device.write(self.i2c_address, &write).await {
             Ok(()) => {
-                trace!("write success");
+                trace!("[{:#x}] write success", self.i2c_address);
                 Ok(())
             }
             Err(e) => {
-                trace!("error encountered: {}", e);
+                trace!("[{:#x}] error encountered: {}", self.i2c_address, e);
                 bail!(ErrorKind::I2c);
             }
         }
