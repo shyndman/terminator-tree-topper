@@ -507,14 +507,14 @@ checksum = "a26ae43d7bcc3b814de94796a5e736d4029efb0ee900c12e2d54c993ad1a1e07"
 [[package]]
 name = "embassy-embedded-hal"
 version = "0.1.0"
-source = "git+https://github.com/shyndman/embassy?rev=76f3a11#76f3a11f43b9f64d2acfe2ebd747fb2741c73bfc"
+source = "git+https://github.com/shyndman/embassy?rev=87c03037#87c03037e320ce30c0cd34fe97e0365e1b11aa9a"
 dependencies = [
  "defmt",
  "embassy-futures",
  "embassy-sync",
  "embassy-time",
  "embedded-hal 0.2.7",
- "embedded-hal 1.0.0-rc.1",
+ "embedded-hal 1.0.0-rc.3",
  "embedded-hal-async",
  "embedded-storage",
  "embedded-storage-async",
@@ -523,36 +523,20 @@ dependencies = [
 
 [[package]]
 name = "embassy-executor"
-version = "0.3.3"
-source = "git+https://github.com/shyndman/embassy?rev=76f3a11#76f3a11f43b9f64d2acfe2ebd747fb2741c73bfc"
+version = "0.4.0"
+source = "git+https://github.com/shyndman/embassy?rev=87c03037#87c03037e320ce30c0cd34fe97e0365e1b11aa9a"
 dependencies = [
  "cortex-m",
  "critical-section",
  "defmt",
- "embassy-macros",
+ "embassy-executor-macros",
  "embassy-time",
 ]
 
 [[package]]
-name = "embassy-futures"
-version = "0.1.1"
-source = "git+https://github.com/shyndman/embassy?rev=76f3a11#76f3a11f43b9f64d2acfe2ebd747fb2741c73bfc"
-
-[[package]]
-name = "embassy-hal-internal"
-version = "0.1.0"
-source = "git+https://github.com/shyndman/embassy?rev=76f3a11#76f3a11f43b9f64d2acfe2ebd747fb2741c73bfc"
-dependencies = [
- "cortex-m",
- "critical-section",
- "defmt",
- "num-traits",
-]
-
-[[package]]
-name = "embassy-macros"
-version = "0.2.1"
-source = "git+https://github.com/shyndman/embassy?rev=76f3a11#76f3a11f43b9f64d2acfe2ebd747fb2741c73bfc"
+name = "embassy-executor-macros"
+version = "0.4.0"
+source = "git+https://github.com/shyndman/embassy?rev=87c03037#87c03037e320ce30c0cd34fe97e0365e1b11aa9a"
 dependencies = [
  "darling",
  "proc-macro2",
@@ -561,9 +545,40 @@ dependencies = [
 ]
 
 [[package]]
+name = "embassy-futures"
+version = "0.1.1"
+source = "git+https://github.com/shyndman/embassy?rev=87c03037#87c03037e320ce30c0cd34fe97e0365e1b11aa9a"
+
+[[package]]
+name = "embassy-hal-internal"
+version = "0.1.0"
+source = "git+https://github.com/shyndman/embassy?rev=87c03037#87c03037e320ce30c0cd34fe97e0365e1b11aa9a"
+dependencies = [
+ "cortex-m",
+ "critical-section",
+ "defmt",
+ "num-traits",
+]
+
+[[package]]
+name = "embassy-net-driver"
+version = "0.2.0"
+source = "git+https://github.com/shyndman/embassy?rev=87c03037#87c03037e320ce30c0cd34fe97e0365e1b11aa9a"
+
+[[package]]
+name = "embassy-net-driver-channel"
+version = "0.2.0"
+source = "git+https://github.com/shyndman/embassy?rev=87c03037#87c03037e320ce30c0cd34fe97e0365e1b11aa9a"
+dependencies = [
+ "embassy-futures",
+ "embassy-net-driver",
+ "embassy-sync",
+]
+
+[[package]]
 name = "embassy-rp"
 version = "0.1.0"
-source = "git+https://github.com/shyndman/embassy?rev=76f3a11#76f3a11f43b9f64d2acfe2ebd747fb2741c73bfc"
+source = "git+https://github.com/shyndman/embassy?rev=87c03037#87c03037e320ce30c0cd34fe97e0365e1b11aa9a"
 dependencies = [
  "atomic-polyfill",
  "cfg-if",
@@ -578,7 +593,7 @@ dependencies = [
  "embassy-time",
  "embassy-usb-driver",
  "embedded-hal 0.2.7",
- "embedded-hal 1.0.0-rc.1",
+ "embedded-hal 1.0.0-rc.3",
  "embedded-hal-async",
  "embedded-hal-nb",
  "embedded-io",
@@ -597,26 +612,27 @@ dependencies = [
 
 [[package]]
 name = "embassy-sync"
-version = "0.4.0"
-source = "git+https://github.com/shyndman/embassy?rev=76f3a11#76f3a11f43b9f64d2acfe2ebd747fb2741c73bfc"
+version = "0.5.0"
+source = "git+https://github.com/shyndman/embassy?rev=87c03037#87c03037e320ce30c0cd34fe97e0365e1b11aa9a"
 dependencies = [
  "cfg-if",
  "critical-section",
  "defmt",
+ "embedded-io-async",
  "futures-util",
  "heapless",
 ]
 
 [[package]]
 name = "embassy-time"
-version = "0.1.5"
-source = "git+https://github.com/shyndman/embassy?rev=76f3a11#76f3a11f43b9f64d2acfe2ebd747fb2741c73bfc"
+version = "0.2.0"
+source = "git+https://github.com/shyndman/embassy?rev=87c03037#87c03037e320ce30c0cd34fe97e0365e1b11aa9a"
 dependencies = [
  "cfg-if",
  "critical-section",
  "defmt",
  "embedded-hal 0.2.7",
- "embedded-hal 1.0.0-rc.1",
+ "embedded-hal 1.0.0-rc.3",
  "embedded-hal-async",
  "futures-util",
  "heapless",
@@ -625,7 +641,7 @@ dependencies = [
 [[package]]
 name = "embassy-usb-driver"
 version = "0.1.0"
-source = "git+https://github.com/shyndman/embassy?rev=76f3a11#76f3a11f43b9f64d2acfe2ebd747fb2741c73bfc"
+source = "git+https://github.com/shyndman/embassy?rev=87c03037#87c03037e320ce30c0cd34fe97e0365e1b11aa9a"
 dependencies = [
  "defmt",
 ]
@@ -667,37 +683,37 @@ dependencies = [
 
 [[package]]
 name = "embedded-hal"
-version = "1.0.0-rc.1"
+version = "1.0.0-rc.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2894bc2f0457b8ca3d6b8ab8aad64d9337583672494013457f86c5a9146c0e22"
+checksum = "bc402f79e1fd22731ca945b4f97b5ff37e7b3f379312595c42bb2e8811c29920"
 
 [[package]]
 name = "embedded-hal-async"
-version = "1.0.0-rc.1"
+version = "1.0.0-rc.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "76a8a3517745342155b3b00895a0f78417a453fb800d97a8bf4777d5720acde9"
+checksum = "fa1fba2ef2ffb35d614acc6fb323ddf7facc45c069f24544d49ea54e5043626d"
 dependencies = [
- "embedded-hal 1.0.0-rc.1",
+ "embedded-hal 1.0.0-rc.3",
 ]
 
 [[package]]
 name = "embedded-hal-bus"
-version = "0.1.0-rc.1"
+version = "0.1.0-rc.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "662822f2853efaa9629ba6d424d7b0cbf8f7f52d68a8919c9afe56e7f9dd1b2a"
+checksum = "1efb2ecab73461234acd6db8576463c11c315b44ce234f2ced82f87c60831f4f"
 dependencies = [
  "critical-section",
- "embedded-hal 1.0.0-rc.1",
+ "embedded-hal 1.0.0-rc.3",
  "embedded-hal-async",
 ]
 
 [[package]]
 name = "embedded-hal-nb"
-version = "1.0.0-rc.1"
+version = "1.0.0-rc.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "257e3bb0163c69195acb0ebe0083b017b963235861d5ea9741626abdc55f39c9"
+checksum = "3cde58312a0675b6c0389eb0dceb2bf8c735a697b0b5baa1f23bbaf030636deb"
 dependencies = [
- "embedded-hal 1.0.0-rc.1",
+ "embedded-hal 1.0.0-rc.3",
  "nb 1.1.0",
 ]
 
@@ -1563,7 +1579,7 @@ dependencies = [
  "embassy-sync",
  "embassy-time",
  "embedded-graphics",
- "embedded-hal 1.0.0-rc.1",
+ "embedded-hal 1.0.0-rc.3",
  "embedded-hal-async",
  "embedded-hal-bus",
  "embedded-io",
