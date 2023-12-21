@@ -3,7 +3,7 @@ use embassy_time::Duration;
 use crate::time::ticker::PreemptTicker;
 
 const VACTUAL_TO_USTEP_HZ_FACTOR: f32 = 0.715;
-const UPDATE_PERIOD: Duration = Duration::from_hz(1);
+const UPDATE_PERIOD: Duration = Duration::from_hz(20);
 
 pub struct RampGenerator {
     degrees_per_step: f32,
