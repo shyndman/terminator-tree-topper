@@ -1,4 +1,3 @@
-use anyhow::Result;
 use base64::prelude::BASE64_STANDARD_NO_PAD;
 use defmt::println;
 use embassy_rp::uart::{self, BufferedUart};
@@ -11,6 +10,7 @@ use embedded_graphics::{
     prelude::*,
 };
 use embedded_io_async::Write;
+use snafu::IntoError;
 
 pub struct DebugUart<P: uart::Instance + 'static> {
     uart: BufferedUart<'static, P>,
@@ -24,7 +24,7 @@ impl<P: uart::Instance> DebugUart<P> {
         Self { uart }
     }
 
-    pub async fn render(&mut self) -> Result<()> {
+    pub async fn render(&mut self) -> Result<(), uart::Error> {
         println!("render()");
 
         let mut image_data = [0u8; IMAGE_BYTE_LENGTH];

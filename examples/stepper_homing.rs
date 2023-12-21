@@ -7,7 +7,6 @@
 #[allow(dead_code)]
 extern crate alloc;
 
-use anyhow::Result;
 use defmt::{assert, *};
 use defmt_rtt as _;
 use embassy_executor::Spawner;
@@ -328,7 +327,7 @@ const RUNTIME_STALL_THRESHOLD: u16 = 0xff;
 async fn home_steppers(
     motor_commands: &'static MotorCommandChannel,
     motor_load_signal: &'static MotorLoadSignal,
-) -> Result<()> {
+) -> Result<(), ()> {
     info!("Homing rotation");
 
     let cmd = motor_commands
