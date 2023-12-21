@@ -5,7 +5,6 @@
 #![no_main]
 #![feature(type_alias_impl_trait)]
 #[allow(dead_code)]
-
 extern crate alloc;
 
 use defmt::*;
@@ -21,9 +20,7 @@ use embassy_rp::{
     uart::{self, BufferedInterruptHandler, BufferedUart},
 };
 use embassy_sync::{
-    blocking_mutex::raw::{CriticalSectionRawMutex, RawMutex},
-    mutex::Mutex,
-    pubsub::PubSubChannel,
+    blocking_mutex::raw::CriticalSectionRawMutex, mutex::Mutex, pubsub::PubSubChannel,
 };
 use embassy_time::{Duration, Ticker, Timer};
 use futures::{pin_mut, prelude::*};
@@ -38,6 +35,7 @@ use t800::{
         tune::tune_driver,
         uart::{Tmc2209UartConnection, UART_BAUD_RATE},
     },
+    stream::channel_to_stream,
     uart::bus::UartDevice,
 };
 use tmc2209::reg::SG_RESULT;
@@ -87,8 +85,8 @@ async fn main(spawner: Spawner) {
         .spawn(manage_eye_leds(pio0, p.DMA_CH0, p.PIN_16))
         .unwrap();
 
-    let mut adc = adc::Adc::new(p.ADC, Irqs, adc::Config::default());
-    let mut speed_adc_channel = adc::Channel::new_pin(p.PIN_26, Pull::None);
+    let adc = adc::Adc::new(p.ADC, Irqs, adc::Config::default());
+    let speed_adc_channel = adc::Channel::new_pin(p.PIN_26, Pull::None);
 
     spawner
         .spawn(process_velocity_input(
@@ -404,18 +402,3 @@ impl Ws2812FrameProvider<2> for EyeLightFrameSource {
 
 //     futures::stream::select(command_sub_stream, state_sub_stream)
 // }
-
-pub fn channel_to_stream<
-    M: RawMutex,
-    T: Clone,
-    const CAP: usize,
-    const SUBS: usize,
-    const PUBS: usize,
->(
-    channel: &'static PubSubChannel<M, T, CAP, SUBS, PUBS>,
-) -> impl Stream<Item = T> {
-    stream::unfold(channel.subscriber().unwrap(), |mut sub| async {
-        // TODO(shyndman): Maybe add optional logging on lagged streams?
-        Some((sub.next_message_pure().await, sub))
-    })
-}

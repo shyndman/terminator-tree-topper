@@ -29,5 +29,6 @@ pub mod debug;
 pub mod gpio;
 pub mod led;
 pub mod stepper;
+pub mod stream;
 pub mod time;
 pub mod uart;
