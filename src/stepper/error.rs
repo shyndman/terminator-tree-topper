@@ -1,24 +1,16 @@
 use core::{error::Error, fmt::Display};
 
-use anyhow::anyhow;
+use snafu::prelude::Snafu;
 
-#[derive(Debug)]
+#[derive(Debug, Snafu)]
 pub enum ErrorKind {
     ConnectionFailed,
-    UartGeneral(embassy_rp::uart::Error),
-    UartReadExact(embedded_io::ReadExactError<embassy_rp::uart::Error>),
+    UartGeneral {
+        inner: embassy_rp::uart::Error,
+    },
+    UartReadExact {
+        inner: embedded_io::ReadExactError<embassy_rp::uart::Error>,
+    },
     MissingResponse,
     WriteFailed,
-}
-impl Display for ErrorKind {
-    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        write!(f, "{:?}", self)
-    }
-}
-impl Error for ErrorKind {}
-
-impl Into<anyhow::Error> for ErrorKind {
-    fn into(self) -> anyhow::Error {
-        anyhow!(self)
-    }
 }

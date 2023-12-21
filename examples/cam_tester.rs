@@ -6,7 +6,6 @@
 #[allow(dead_code)]
 extern crate alloc;
 
-use anyhow::Result;
 use defmt::{self, info, println, trace};
 use defmt_rtt as _;
 use embassy_embedded_hal::shared_bus::asynch::i2c::I2cDevice;
@@ -30,7 +29,10 @@ use panic_probe as _;
 use static_cell::make_static;
 use t800::{
     self as _,
-    camera::hm0360::{Hm0360, BUS_ADDRESS_ALT1, BUS_ADDRESS_DEFAULT},
+    camera::{
+        self,
+        hm0360::{Hm0360, BUS_ADDRESS_ALT1, BUS_ADDRESS_DEFAULT},
+    },
     debug::DebugUart,
 };
 
@@ -72,7 +74,7 @@ async fn main(_spawner: Spawner) -> ! {
     info!("Camera ready");
 
     loop {
-        let _: anyhow::Result<()> = try {
+        let _: Result<(), camera::hm0360::error::ErrorKind> = try {
             camera_interrupt.wait_for_high().await;
             trace!("Interrupt!!");
 
@@ -93,7 +95,7 @@ async fn setup_camera<M: RawMutex + 'static, B: i2c::Instance + 'static, Reset: 
     i2c_bus: &'static Mutex<M, i2c::I2c<'static, B, i2c::Async>>,
     i2c_address: SevenBitAddress,
     reset_pin: Reset,
-) -> Result<Hm0360<'static, M, B, SevenBitAddress, Reset>> {
+) -> Result<Hm0360<'static, M, B, SevenBitAddress, Reset>, camera::hm0360::error::ErrorKind> {
     let mut cam = Hm0360::new(I2cDevice::new(i2c_bus), i2c_address, reset_pin).await;
     cam.set_motion_detection_threshold(0xff / 2 + 20).await?;
     cam.enable_motion_detection().await?;

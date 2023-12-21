@@ -4,7 +4,6 @@ pub mod reg;
 
 use alloc::vec::Vec;
 
-use anyhow::{bail, Result};
 use defmt::{debug, error, println, trace, warn, Debug2Format};
 use embassy_embedded_hal::shared_bus::{asynch::i2c::I2cDevice, I2cDeviceError};
 use embassy_rp::{
@@ -19,6 +18,7 @@ use embedded_hal_async::i2c::I2c;
 use error::ErrorKind;
 use init::HM0360_DEFAULT_REGISTERS;
 use reg::RegisterAddress as Addr;
+use snafu::prelude::ensure;
 
 use self::reg::{
     Register, WritableRegister, HIMAX_MD_ROI_QQVGA_H, HIMAX_MD_ROI_QQVGA_W,
@@ -101,7 +101,7 @@ impl<M: RawMutex + 'static, B: i2c::Instance + 'static, Reset: gpio::Pin>
         camera
     }
 
-    pub async fn reset(&mut self) -> Result<()> {
+    pub async fn reset(&mut self) -> Result<(), ErrorKind> {
         trace!("[{:#x}] Triggering camera reset", self.i2c_address);
 
         self.reset_out.set_high();
@@ -114,7 +114,10 @@ impl<M: RawMutex + 'static, B: i2c::Instance + 'static, Reset: gpio::Pin>
         Ok(())
     }
 
-    pub async fn set_motion_detection_threshold(&mut self, threshold: u8) -> Result<()> {
+    pub async fn set_motion_detection_threshold(
+        &mut self,
+        threshold: u8,
+    ) -> Result<(), ErrorKind> {
         // Set motion detection threshold/sensitivity.
         self.write_raw(Addr::MdThStrL, threshold).await?;
         self.write_raw(Addr::MdThStrH, threshold).await?;
@@ -129,7 +132,7 @@ impl<M: RawMutex + 'static, B: i2c::Instance + 'static, Reset: gpio::Pin>
         y: u16,
         w: u16,
         h: u16,
-    ) -> Result<()> {
+    ) -> Result<(), ErrorKind> {
         let x1: u16 = x;
         let y1: u16 = y;
         let x2: u16 = x + w;
@@ -142,7 +145,7 @@ impl<M: RawMutex + 'static, B: i2c::Instance + 'static, Reset: gpio::Pin>
             (0, 0) => (HIMAX_MD_ROI_VGA_W as u16, HIMAX_MD_ROI_VGA_H as u16, 14),
             (1, 1) => (HIMAX_MD_ROI_QVGA_W as u16, HIMAX_MD_ROI_QVGA_H as u16, 14),
             (2, 2) => (HIMAX_MD_ROI_QQVGA_W as u16, HIMAX_MD_ROI_QQVGA_H as u16, 13),
-            _ => bail!(ErrorKind::StateError),
+            _ => return Err(ErrorKind::StateError),
         };
 
         let x1 = ((x1 / roi_w).saturating_sub(1)).max(0) as u8;
@@ -158,25 +161,25 @@ impl<M: RawMutex + 'static, B: i2c::Instance + 'static, Reset: gpio::Pin>
         Ok(())
     }
 
-    pub async fn enable_motion_detection(&mut self) -> Result<()> {
+    pub async fn enable_motion_detection(&mut self) -> Result<(), ErrorKind> {
         self.clear_motion_detection().await?;
         let reg = self.read_raw(Addr::MdCtrl).await?;
         self.write_raw(Addr::MdCtrl, reg | 1).await;
         Ok(())
     }
 
-    pub async fn is_motion_detected(&mut self) -> Result<bool> {
+    pub async fn is_motion_detected(&mut self) -> Result<bool, ErrorKind> {
         Ok(self
             .read::<reg::InterruptIndicator>()
             .await?
             .motion_detected)
     }
 
-    pub async fn clear_motion_detection(&mut self) -> Result<()> {
+    pub async fn clear_motion_detection(&mut self) -> Result<(), ErrorKind> {
         self.write_raw(Addr::ClearInterrupts, 1 << 3).await
     }
 
-    pub async fn get_motion_map(&mut self) -> Result<impl MotionMap> {
+    pub async fn get_motion_map(&mut self) -> Result<impl MotionMap, ErrorKind> {
         let mut buf = self
             .read_raw_n::<u16, ROI_BYTE_COUNT>(0x20A1 as u16)
             .await?;
@@ -185,11 +188,11 @@ impl<M: RawMutex + 'static, B: i2c::Instance + 'static, Reset: gpio::Pin>
         Ok(SliceMotionMap::new(ROI_COLUMN_COUNT, ROI_ROW_COUNT, buf))
     }
 
-    pub async fn read<R: Register + defmt::Format>(&mut self) -> Result<R> {
+    pub async fn read<R: Register + defmt::Format>(&mut self) -> Result<R, ErrorKind> {
         match self.read_raw(R::address()).await {
             Ok(val) => Ok(R::from_bytes([val])),
             Err(e) => {
-                bail!(e)
+                return Err(e);
             }
         }
     }
@@ -197,7 +200,7 @@ impl<M: RawMutex + 'static, B: i2c::Instance + 'static, Reset: gpio::Pin>
     pub async fn read_raw<A: Into<u16> + defmt::Format>(
         &mut self,
         reg_address: A,
-    ) -> Result<u8> {
+    ) -> Result<u8, ErrorKind> {
         let buf = self.read_raw_n::<A, 1>(reg_address).await?;
         Ok(buf[0])
     }
@@ -205,7 +208,7 @@ impl<M: RawMutex + 'static, B: i2c::Instance + 'static, Reset: gpio::Pin>
     pub async fn read_raw_n<A: Into<u16> + defmt::Format, const LEN: usize>(
         &mut self,
         reg_address: A,
-    ) -> Result<[u8; LEN]> {
+    ) -> Result<[u8; LEN], ErrorKind> {
         trace!(
             "[{:#x}] read_raw_n {:#X} len={}",
             self.i2c_address,
@@ -225,12 +228,15 @@ impl<M: RawMutex + 'static, B: i2c::Instance + 'static, Reset: gpio::Pin>
             }
             Err(e) => {
                 trace!("[{:#x}] error encountered: {}", self.i2c_address, e);
-                bail!(ErrorKind::I2c)
+                Err(ErrorKind::I2c)
             }
         }
     }
 
-    pub async fn write<R: WritableRegister + defmt::Format>(&mut self, reg: R) -> Result<()> {
+    pub async fn write<R: WritableRegister + defmt::Format>(
+        &mut self,
+        reg: R,
+    ) -> Result<(), ErrorKind> {
         self.write_raw(R::address(), reg.into_bytes()[0]).await?;
         Ok(())
     }
@@ -239,7 +245,7 @@ impl<M: RawMutex + 'static, B: i2c::Instance + 'static, Reset: gpio::Pin>
         &mut self,
         reg_address: A,
         value: u8,
-    ) -> Result<()> {
+    ) -> Result<(), ErrorKind> {
         trace!(
             "[{:#x}] write_register {:#X} {:b}",
             self.i2c_address,
@@ -256,7 +262,7 @@ impl<M: RawMutex + 'static, B: i2c::Instance + 'static, Reset: gpio::Pin>
             }
             Err(e) => {
                 trace!("[{:#x}] error encountered: {}", self.i2c_address, e);
-                bail!(ErrorKind::I2c);
+                return Err(ErrorKind::I2c);
             }
         }
     }
