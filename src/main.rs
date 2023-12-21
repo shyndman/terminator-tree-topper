@@ -32,8 +32,7 @@ use t800::{
     led::{Ws2812Chain, Ws2812FrameProvider},
     stepper::{
         motor_constants::NEMA11_11HS18_0674S_CONSTANTS,
-        tune::tune_driver,
-        uart::{Tmc2209UartConnection, UART_BAUD_RATE},
+        tmc2209::{tune::tune_driver, Tmc2209UartConnection, UART_BAUD_RATE},
     },
     stream::channel_to_stream,
     uart::bus::UartDevice,
