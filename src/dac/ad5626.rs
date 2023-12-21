@@ -99,7 +99,7 @@ impl<'d, PIO: Instance, const SM: usize, CLEAR: gpio::Pin> Ad5626<'d, PIO, SM, C
 
     pub async fn clear(&mut self) {
         self.clear_out
-            .toggle_and_back(Duration::from_micros(1))
+            .toggle_for(Duration::from_micros(1))
             .await;
     }
 

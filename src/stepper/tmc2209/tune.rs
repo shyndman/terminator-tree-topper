@@ -2,11 +2,8 @@ use embassy_rp::uart;
 use embassy_sync::blocking_mutex::raw::RawMutex;
 use micromath::F32Ext;
 
-use super::{
-    error::ErrorKind,
-    motor_constants::{MotorConstants, TMC2209_VSENSE_OHMS},
-    uart::Tmc2209UartConnection,
-};
+use super::{error::ErrorKind, uart::Tmc2209UartConnection};
+use crate::stepper::motor_constants::{MotorConstants, TMC2209_VSENSE_OHMS};
 
 const IHOLD_DELAY: u8 = 12;
 const SEMIN: u16 = 8;
