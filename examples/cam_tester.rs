@@ -63,11 +63,11 @@ async fn main(_spawner: Spawner) -> ! {
         Mutex::<CriticalSectionRawMutex, i2c::I2c<'static, I2C1, i2c::Async>>::new(i2c)
     });
 
-    // let mut cam = setup_camera(i2c1_bus, LEFT_CAM_ADDRESS, p.PIN_13)
-    let mut cam = setup_camera(i2c1_bus, RIGHT_CAM_ADDRESS, p.PIN_12)
+    let mut cam = setup_camera(i2c1_bus, LEFT_CAM_ADDRESS, p.PIN_13)
+        // let mut cam = setup_camera(i2c1_bus, RIGHT_CAM_ADDRESS, p.PIN_12)
         .await
         .unwrap();
-    let mut camera_interrupt = Input::new(p.PIN_8, embassy_rp::gpio::Pull::None);
+    let mut camera_interrupt = Input::new(p.PIN_11, embassy_rp::gpio::Pull::None);
 
     info!("Camera ready");
 
