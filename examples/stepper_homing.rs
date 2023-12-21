@@ -121,7 +121,7 @@ async fn main(spawner: Spawner) {
 
     let life_stage: &'static mut LifeStage = make_static!(LifeStage::new());
 
-    let mut motor_load_signal: &'static mut MotorLoadSignal =
+    let motor_load_signal: &'static mut MotorLoadSignal =
         make_static!(MotorLoadSignal::new());
 
     let motor_commands: &'static mut MotorCommandChannel =
@@ -130,10 +130,13 @@ async fn main(spawner: Spawner) {
     spawner
         .spawn(watch_for_stepper_interrupts(
             motor_commands,
-            p.PIN_17.into(),
-            p.PIN_18.into(),
+            p.PIN_5.into(),
+            p.PIN_4.into(),
         ))
         .unwrap();
+
+    // PIN_6 DIRECTION
+    // PIN_7 STEP
 
     spawner
         .spawn(manage_steppers(
@@ -153,7 +156,7 @@ async fn main(spawner: Spawner) {
                     cfg
                 },
             ),
-            p.PIN_16.into(),
+            p.PIN_3.into(),
         ))
         .unwrap();
 
@@ -318,7 +321,7 @@ async fn manage_steppers(
 
 const HOMING_VELOCITY: i32 = -8_000;
 const HOMING_ACCELERATION: u32 = 300;
-const HOME_MANEUVERING_VELOCITY: i32 = -12000;
+const HOME_MANEUVERING_VELOCITY: i32 = HOMING_VELOCITY;
 const HOMING_STALL_THRESHOLD: u16 = 10;
 const RUNTIME_STALL_THRESHOLD: u16 = 0xff;
 
