@@ -230,6 +230,34 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7a81dae078cea95a014a339291cec439d2f232ebe854a9d672b796c6afafa9b7"
 
 [[package]]
+name = "cyw43"
+version = "0.1.0"
+source = "git+https://github.com/shyndman/embassy?rev=87c03037#87c03037e320ce30c0cd34fe97e0365e1b11aa9a"
+dependencies = [
+ "cortex-m",
+ "cortex-m-rt",
+ "embassy-futures",
+ "embassy-net-driver-channel",
+ "embassy-sync",
+ "embassy-time",
+ "embedded-hal 1.0.0-rc.3",
+ "futures",
+ "num_enum",
+]
+
+[[package]]
+name = "cyw43-pio"
+version = "0.1.0"
+source = "git+https://github.com/shyndman/embassy?rev=87c03037#87c03037e320ce30c0cd34fe97e0365e1b11aa9a"
+dependencies = [
+ "cyw43",
+ "embassy-rp",
+ "fixed",
+ "pio",
+ "pio-proc",
+]
+
+[[package]]
 name = "darling"
 version = "0.20.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1522,6 +1550,8 @@ dependencies = [
  "bondrewd",
  "cortex-m",
  "cortex-m-rt",
+ "cyw43",
+ "cyw43-pio",
  "dasp",
  "defmt",
  "defmt-rtt",
