@@ -44,7 +44,7 @@ impl<'d, PIO: Instance, const SM: usize, CLEAR: gpio::Pin> Ad5626<'d, PIO, SM, C
         sm.clkdiv_restart();
         sm.restart();
 
-        let program = pio_proc::pio_file!("src/dac/ad5626.pio").program;
+        let program = pio_proc::pio_file!("src/dac/ad5626/ad5626.pio").program;
 
         // Pin config
         let pio_cfg = {
