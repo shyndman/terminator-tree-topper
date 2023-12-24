@@ -34,7 +34,10 @@ use panic_probe as _;
 use static_cell::make_static;
 use t800::{
     self as _,
-    camera::{hm0360::{Hm0360, MotionMap, BUS_ADDRESS_ALT1, BUS_ADDRESS_DEFAULT}, self},
+    camera::{
+        self,
+        hm0360::{Hm0360, MotionMap, BUS_ADDRESS_ALT1, BUS_ADDRESS_DEFAULT},
+    },
     debug::DebugUart,
 };
 
@@ -78,14 +81,14 @@ async fn main(spawner: Spawner) -> ! {
         i2c::I2c<'static, I2C1, i2c::Async>,
     > = make_static!({
         let i2c =
-            i2c::I2c::new_async(p.I2C1, p.PIN_15, p.PIN_14, Irqs, i2c::Config::default());
+            i2c::I2c::new_async(p.I2C1, p.PIN_11, p.PIN_10, Irqs, i2c::Config::default());
         Mutex::<CriticalSectionRawMutex, i2c::I2c<'static, I2C1, i2c::Async>>::new(i2c)
     });
 
-    let mut camera_interrupt = Input::new(p.PIN_11, embassy_rp::gpio::Pull::None);
+    let mut camera_interrupt = Input::new(p.PIN_12, embassy_rp::gpio::Pull::None);
     let (mut cam_left, mut cam_right) = match join(
         setup_camera(i2c1_bus, LEFT_CAM_ADDRESS, p.PIN_13),
-        setup_camera(i2c1_bus, RIGHT_CAM_ADDRESS, p.PIN_12),
+        setup_camera(i2c1_bus, RIGHT_CAM_ADDRESS, p.PIN_14),
     )
     .await
     {
