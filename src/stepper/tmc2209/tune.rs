@@ -2,7 +2,7 @@ use embassy_rp::uart;
 use embassy_sync::blocking_mutex::raw::RawMutex;
 use micromath::F32Ext;
 
-use super::{error::ErrorKind, uart::Tmc2209UartConnection};
+use super::{error::UartErrorKind, uart::Tmc2209UartConnection};
 use crate::stepper::motor_constants::{MotorConstants, TMC2209_VSENSE_OHMS};
 
 const IHOLD_DELAY: u8 = 12;
@@ -15,8 +15,8 @@ const SEIMIN: bool = false; // If we drop to 1/4 current, high accels don't work
 pub async fn tune_driver<M: RawMutex + 'static, P: uart::Instance>(
     driver: &mut Tmc2209UartConnection<M, P>,
     motor_constants: MotorConstants,
-) -> Result<(), ErrorKind> {
-    let result: Result<(), ErrorKind> = try {
+) -> Result<(), UartErrorKind> {
+    let result: Result<(), UartErrorKind> = try {
         // Disable automatic power down, because its pin is shared
         let mut gconf = tmc2209::reg::GCONF::default();
         gconf.set_pdn_disable(true);
