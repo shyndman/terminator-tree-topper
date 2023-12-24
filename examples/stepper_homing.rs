@@ -22,7 +22,7 @@ use embassy_rp::{
 use embassy_sync::{
     blocking_mutex::raw::NoopRawMutex, mutex::Mutex, pubsub::PubSubChannel, signal::Signal,
 };
-use embassy_time::{Instant, Ticker, Timer, Duration};
+use embassy_time::{Duration, Instant, Ticker, Timer};
 use futures::{pin_mut, prelude::*};
 use panic_probe as _;
 use static_cell::make_static;
@@ -32,7 +32,8 @@ use t800::{
         tmc2209::{tune::tune_driver, Tmc2209UartConnection, UART_BAUD_RATE},
     },
     stream::channel_to_stream,
-    uart::bus::UartDevice, time::ticker::PreemptTicker,
+    time::ticker::PreemptTicker,
+    uart::bus::UartDevice,
 };
 
 bind_interrupts!(struct Irqs {

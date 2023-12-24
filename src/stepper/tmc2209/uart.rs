@@ -5,7 +5,7 @@ use embassy_rp::uart::{self, BufferedUart};
 use embassy_sync::blocking_mutex::raw::RawMutex;
 use embedded_io_async::{Read, Write};
 
-use super::error::ErrorKind;
+use super::error::UartErrorKind;
 use crate::uart::bus::UartDevice;
 
 /// NOTE: Setting this value too low can create its own set of problems. For example,
@@ -23,7 +23,7 @@ impl<M: RawMutex + 'static, P: 'static + uart::Instance> Tmc2209UartConnection<M
     pub async fn connect(
         uart_device: UartDevice<'static, M, P>,
         uart_address: u8,
-    ) -> Result<Self, ErrorKind> {
+    ) -> Result<Self, UartErrorKind> {
         defmt::debug!("Connecting to TMC2209 UART bus address {}", uart_address);
 
         let mut connection = Tmc2209UartConnection {
@@ -34,19 +34,19 @@ impl<M: RawMutex + 'static, P: 'static + uart::Instance> Tmc2209UartConnection<M
         connection
             .initialize()
             .await
-            .map_err(|_| ErrorKind::ConnectionFailed)?;
+            .map_err(|_| UartErrorKind::ConnectionFailed)?;
         Ok(connection)
     }
 
     /// Initializes the state of the connection
-    async fn initialize(&mut self) -> Result<(), ErrorKind> {
+    async fn initialize(&mut self) -> Result<(), UartErrorKind> {
         self.change_count = self.read_register::<tmc2209::reg::IFCNT>().await?.0;
         Ok(())
     }
 
     pub async fn read_register<R: tmc2209::reg::Register + From<u32>>(
         &mut self,
-    ) -> Result<R, ErrorKind> {
+    ) -> Result<R, UartErrorKind> {
         let register_address = R::ADDRESS;
         defmt::trace!(
             "Writing read request to {:?}@{}",
@@ -58,7 +58,7 @@ impl<M: RawMutex + 'static, P: 'static + uart::Instance> Tmc2209UartConnection<M
         defmt::trace!("read request bytes: {}", req.bytes());
         if let Err(e) = self.uart_device.write_all(req.bytes()).await {
             defmt::error!("{}", e);
-            return Err(ErrorKind::UartGeneral { inner: e });
+            return Err(UartErrorKind::UartGeneral { inner: e });
         }
 
         let mut buffer: [u8; tmc2209::ReadRequest::LEN_BYTES +
@@ -70,7 +70,7 @@ impl<M: RawMutex + 'static, P: 'static + uart::Instance> Tmc2209UartConnection<M
             }
             Err(e) => {
                 defmt::error!("{}", e);
-                return Err(ErrorKind::UartReadExact { inner: e });
+                return Err(UartErrorKind::UartReadExact { inner: e });
             }
         }
 
@@ -86,14 +86,14 @@ impl<M: RawMutex + 'static, P: 'static + uart::Instance> Tmc2209UartConnection<M
                 (bytes, _) => {
                     defmt::error!("no response: {} bytes read", bytes);
                     defmt::error!("{}", &buffer);
-                    return Err(ErrorKind::MissingResponse);
+                    return Err(UartErrorKind::MissingResponse);
                 }
             }
             .into(),
         ))
     }
 
-    pub async fn write_register<R>(&mut self, register: R) -> Result<u32, ErrorKind>
+    pub async fn write_register<R>(&mut self, register: R) -> Result<u32, UartErrorKind>
     where
         R: tmc2209::reg::WritableRegister + Debug,
     {
@@ -103,7 +103,7 @@ impl<M: RawMutex + 'static, P: 'static + uart::Instance> Tmc2209UartConnection<M
         defmt::trace!("write request: {}", req.bytes());
         if let Err(e) = self.uart_device.write_all(req.bytes()).await {
             defmt::error!("{}", e);
-            return Err(ErrorKind::UartGeneral { inner: e });
+            return Err(UartErrorKind::UartGeneral { inner: e });
         }
 
         // Clear the echo
@@ -131,7 +131,7 @@ impl<M: RawMutex + 'static, P: 'static + uart::Instance> Tmc2209UartConnection<M
                 prev_change_count,
                 new_change_count
             );
-            Err(ErrorKind::WriteFailed)
+            Err(UartErrorKind::WriteFailed)
         }
     }
 }

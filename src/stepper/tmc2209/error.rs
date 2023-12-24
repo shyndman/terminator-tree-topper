@@ -3,7 +3,7 @@ use core::{error::Error, fmt::Display};
 use snafu::prelude::Snafu;
 
 #[derive(Debug, Snafu)]
-pub enum ErrorKind {
+pub enum UartErrorKind {
     ConnectionFailed,
     UartGeneral {
         inner: embassy_rp::uart::Error,
@@ -13,4 +13,10 @@ pub enum ErrorKind {
     },
     MissingResponse,
     WriteFailed,
+}
+
+#[derive(Debug, Snafu, defmt::Format)]
+#[snafu(visibility(pub))]
+pub enum MotionErrorKind {
+    StepPinState,
 }
