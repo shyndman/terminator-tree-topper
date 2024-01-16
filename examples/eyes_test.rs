@@ -10,10 +10,8 @@ use defmt::*;
 use defmt_rtt as _;
 use embassy_executor::Spawner;
 use embassy_rp::{
-    bind_interrupts,
-    clocks::ClockConfig,
-    config,
-    peripherals::{DMA_CH0, PIN_15, PIO0, PIO1},
+    bind_interrupts, config,
+    peripherals::{DMA_CH0, PIN_15, PIO1},
     pio::{self, Pio},
 };
 use embassy_time::{Duration, Ticker, Timer};
