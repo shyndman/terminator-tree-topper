@@ -232,7 +232,7 @@ checksum = "7a81dae078cea95a014a339291cec439d2f232ebe854a9d672b796c6afafa9b7"
 [[package]]
 name = "cyw43"
 version = "0.1.0"
-source = "git+https://github.com/shyndman/embassy?rev=87c03037#87c03037e320ce30c0cd34fe97e0365e1b11aa9a"
+source = "git+https://github.com/shyndman/embassy?rev=9cd0beaee#9cd0beaee37f9e1cc885ad162b63bca795478227"
 dependencies = [
  "cortex-m",
  "cortex-m-rt",
@@ -240,7 +240,7 @@ dependencies = [
  "embassy-net-driver-channel",
  "embassy-sync",
  "embassy-time",
- "embedded-hal 1.0.0-rc.3",
+ "embedded-hal 1.0.0",
  "futures",
  "num_enum",
 ]
@@ -248,7 +248,7 @@ dependencies = [
 [[package]]
 name = "cyw43-pio"
 version = "0.1.0"
-source = "git+https://github.com/shyndman/embassy?rev=87c03037#87c03037e320ce30c0cd34fe97e0365e1b11aa9a"
+source = "git+https://github.com/shyndman/embassy?rev=9cd0beaee#9cd0beaee37f9e1cc885ad162b63bca795478227"
 dependencies = [
  "cyw43",
  "embassy-rp",
@@ -499,10 +499,13 @@ dependencies = [
 ]
 
 [[package]]
-name = "doc-comment"
-version = "0.3.3"
+name = "document-features"
+version = "0.2.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "fea41bba32d969b513997752735605054bc0dfa92b4c56bf1189f2e174be7a10"
+checksum = "ef5282ad69563b5fc40319526ba27e0e7363d552a896f0297d54f767717f9b95"
+dependencies = [
+ "litrs",
+]
 
 [[package]]
 name = "either"
@@ -513,14 +516,14 @@ checksum = "a26ae43d7bcc3b814de94796a5e736d4029efb0ee900c12e2d54c993ad1a1e07"
 [[package]]
 name = "embassy-embedded-hal"
 version = "0.1.0"
-source = "git+https://github.com/shyndman/embassy?rev=87c03037#87c03037e320ce30c0cd34fe97e0365e1b11aa9a"
+source = "git+https://github.com/shyndman/embassy?rev=9cd0beaee#9cd0beaee37f9e1cc885ad162b63bca795478227"
 dependencies = [
  "defmt",
  "embassy-futures",
  "embassy-sync",
  "embassy-time",
  "embedded-hal 0.2.7",
- "embedded-hal 1.0.0-rc.3",
+ "embedded-hal 1.0.0",
  "embedded-hal-async",
  "embedded-storage",
  "embedded-storage-async",
@@ -529,20 +532,22 @@ dependencies = [
 
 [[package]]
 name = "embassy-executor"
-version = "0.4.0"
-source = "git+https://github.com/shyndman/embassy?rev=87c03037#87c03037e320ce30c0cd34fe97e0365e1b11aa9a"
+version = "0.5.0"
+source = "git+https://github.com/shyndman/embassy?rev=9cd0beaee#9cd0beaee37f9e1cc885ad162b63bca795478227"
 dependencies = [
  "cortex-m",
  "critical-section",
  "defmt",
+ "document-features",
  "embassy-executor-macros",
- "embassy-time",
+ "embassy-time-driver",
+ "embassy-time-queue-driver",
 ]
 
 [[package]]
 name = "embassy-executor-macros"
-version = "0.4.0"
-source = "git+https://github.com/shyndman/embassy?rev=87c03037#87c03037e320ce30c0cd34fe97e0365e1b11aa9a"
+version = "0.4.1"
+source = "git+https://github.com/shyndman/embassy?rev=9cd0beaee#9cd0beaee37f9e1cc885ad162b63bca795478227"
 dependencies = [
  "darling",
  "proc-macro2",
@@ -553,12 +558,12 @@ dependencies = [
 [[package]]
 name = "embassy-futures"
 version = "0.1.1"
-source = "git+https://github.com/shyndman/embassy?rev=87c03037#87c03037e320ce30c0cd34fe97e0365e1b11aa9a"
+source = "git+https://github.com/shyndman/embassy?rev=9cd0beaee#9cd0beaee37f9e1cc885ad162b63bca795478227"
 
 [[package]]
 name = "embassy-hal-internal"
 version = "0.1.0"
-source = "git+https://github.com/shyndman/embassy?rev=87c03037#87c03037e320ce30c0cd34fe97e0365e1b11aa9a"
+source = "git+https://github.com/shyndman/embassy?rev=9cd0beaee#9cd0beaee37f9e1cc885ad162b63bca795478227"
 dependencies = [
  "cortex-m",
  "critical-section",
@@ -569,12 +574,12 @@ dependencies = [
 [[package]]
 name = "embassy-net-driver"
 version = "0.2.0"
-source = "git+https://github.com/shyndman/embassy?rev=87c03037#87c03037e320ce30c0cd34fe97e0365e1b11aa9a"
+source = "git+https://github.com/shyndman/embassy?rev=9cd0beaee#9cd0beaee37f9e1cc885ad162b63bca795478227"
 
 [[package]]
 name = "embassy-net-driver-channel"
 version = "0.2.0"
-source = "git+https://github.com/shyndman/embassy?rev=87c03037#87c03037e320ce30c0cd34fe97e0365e1b11aa9a"
+source = "git+https://github.com/shyndman/embassy?rev=9cd0beaee#9cd0beaee37f9e1cc885ad162b63bca795478227"
 dependencies = [
  "embassy-futures",
  "embassy-net-driver",
@@ -584,7 +589,7 @@ dependencies = [
 [[package]]
 name = "embassy-rp"
 version = "0.1.0"
-source = "git+https://github.com/shyndman/embassy?rev=87c03037#87c03037e320ce30c0cd34fe97e0365e1b11aa9a"
+source = "git+https://github.com/shyndman/embassy?rev=9cd0beaee#9cd0beaee37f9e1cc885ad162b63bca795478227"
 dependencies = [
  "atomic-polyfill",
  "cfg-if",
@@ -592,14 +597,16 @@ dependencies = [
  "cortex-m-rt",
  "critical-section",
  "defmt",
+ "document-features",
  "embassy-embedded-hal",
  "embassy-futures",
  "embassy-hal-internal",
  "embassy-sync",
  "embassy-time",
+ "embassy-time-driver",
  "embassy-usb-driver",
  "embedded-hal 0.2.7",
- "embedded-hal 1.0.0-rc.3",
+ "embedded-hal 1.0.0",
  "embedded-hal-async",
  "embedded-hal-nb",
  "embedded-io",
@@ -619,7 +626,7 @@ dependencies = [
 [[package]]
 name = "embassy-sync"
 version = "0.5.0"
-source = "git+https://github.com/shyndman/embassy?rev=87c03037#87c03037e320ce30c0cd34fe97e0365e1b11aa9a"
+source = "git+https://github.com/shyndman/embassy?rev=9cd0beaee#9cd0beaee37f9e1cc885ad162b63bca795478227"
 dependencies = [
  "cfg-if",
  "critical-section",
@@ -631,23 +638,39 @@ dependencies = [
 
 [[package]]
 name = "embassy-time"
-version = "0.2.0"
-source = "git+https://github.com/shyndman/embassy?rev=87c03037#87c03037e320ce30c0cd34fe97e0365e1b11aa9a"
+version = "0.3.0"
+source = "git+https://github.com/shyndman/embassy?rev=9cd0beaee#9cd0beaee37f9e1cc885ad162b63bca795478227"
 dependencies = [
  "cfg-if",
  "critical-section",
  "defmt",
+ "document-features",
+ "embassy-time-driver",
+ "embassy-time-queue-driver",
  "embedded-hal 0.2.7",
- "embedded-hal 1.0.0-rc.3",
+ "embedded-hal 1.0.0",
  "embedded-hal-async",
  "futures-util",
  "heapless",
 ]
 
 [[package]]
+name = "embassy-time-driver"
+version = "0.1.0"
+source = "git+https://github.com/shyndman/embassy?rev=9cd0beaee#9cd0beaee37f9e1cc885ad162b63bca795478227"
+dependencies = [
+ "document-features",
+]
+
+[[package]]
+name = "embassy-time-queue-driver"
+version = "0.1.0"
+source = "git+https://github.com/shyndman/embassy?rev=9cd0beaee#9cd0beaee37f9e1cc885ad162b63bca795478227"
+
+[[package]]
 name = "embassy-usb-driver"
 version = "0.1.0"
-source = "git+https://github.com/shyndman/embassy?rev=87c03037#87c03037e320ce30c0cd34fe97e0365e1b11aa9a"
+source = "git+https://github.com/shyndman/embassy?rev=9cd0beaee#9cd0beaee37f9e1cc885ad162b63bca795478227"
 dependencies = [
  "defmt",
 ]
@@ -689,37 +712,37 @@ dependencies = [
 
 [[package]]
 name = "embedded-hal"
-version = "1.0.0-rc.3"
+version = "1.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bc402f79e1fd22731ca945b4f97b5ff37e7b3f379312595c42bb2e8811c29920"
+checksum = "361a90feb7004eca4019fb28352a9465666b24f840f5c3cddf0ff13920590b89"
 
 [[package]]
 name = "embedded-hal-async"
-version = "1.0.0-rc.3"
+version = "1.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "fa1fba2ef2ffb35d614acc6fb323ddf7facc45c069f24544d49ea54e5043626d"
+checksum = "0c4c685bbef7fe13c3c6dd4da26841ed3980ef33e841cddfa15ce8a8fb3f1884"
 dependencies = [
- "embedded-hal 1.0.0-rc.3",
+ "embedded-hal 1.0.0",
 ]
 
 [[package]]
 name = "embedded-hal-bus"
-version = "0.1.0-rc.3"
+version = "0.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1efb2ecab73461234acd6db8576463c11c315b44ce234f2ced82f87c60831f4f"
+checksum = "57b4e6ede84339ebdb418cd986e6320a34b017cdf99b5cc3efceec6450b06886"
 dependencies = [
  "critical-section",
- "embedded-hal 1.0.0-rc.3",
+ "embedded-hal 1.0.0",
  "embedded-hal-async",
 ]
 
 [[package]]
 name = "embedded-hal-nb"
-version = "1.0.0-rc.3"
+version = "1.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3cde58312a0675b6c0389eb0dceb2bf8c735a697b0b5baa1f23bbaf030636deb"
+checksum = "fba4268c14288c828995299e59b12babdbe170f6c6d73731af1b4648142e8605"
 dependencies = [
- "embedded-hal 1.0.0-rc.3",
+ "embedded-hal 1.0.0",
  "nb 1.1.0",
 ]
 
@@ -1074,6 +1097,12 @@ name = "linux-raw-sys"
 version = "0.4.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "969488b55f8ac402214f3f5fd243ebb7206cf82de60d3172994707a4bcc2b829"
+
+[[package]]
+name = "litrs"
+version = "0.4.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b4ce301924b7887e9d637144fdade93f9dfff9b60981d4ac161db09720d39aa5"
 
 [[package]]
 name = "lock_api"
@@ -1453,6 +1482,7 @@ dependencies = [
 [[package]]
 name = "rustsam"
 version = "0.1.0"
+source = "git+https://github.com/shyndman/rustsam?rev=c670bae0b68c61932f94f55fdb28ac2dd020bd49#c670bae0b68c61932f94f55fdb28ac2dd020bd49"
 dependencies = [
  "anyhow",
  "defmt",
@@ -1505,24 +1535,23 @@ checksum = "4dccd0940a2dcdf68d092b8cbab7dc0ad8fa938bf95787e1b916b0e3d0e8e970"
 
 [[package]]
 name = "snafu"
-version = "0.7.5"
+version = "0.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e4de37ad025c587a29e8f3f5605c00f70b98715ef90b9061a815b9e59e9042d6"
+checksum = "d342c51730e54029130d7dc9fd735d28c4cd360f1368c01981d4f03ff207f096"
 dependencies = [
- "doc-comment",
  "snafu-derive",
 ]
 
 [[package]]
 name = "snafu-derive"
-version = "0.7.5"
+version = "0.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "990079665f075b699031e9c08fd3ab99be5029b96f3b78dc0709e8f77e4efebf"
+checksum = "080c44971436b1af15d6f61ddd8b543995cf63ab8e677d46b00cc06f4ef267a0"
 dependencies = [
  "heck",
  "proc-macro2",
  "quote",
- "syn 1.0.109",
+ "syn 2.0.39",
 ]
 
 [[package]]
@@ -1612,7 +1641,7 @@ dependencies = [
  "embassy-sync",
  "embassy-time",
  "embedded-graphics",
- "embedded-hal 1.0.0-rc.3",
+ "embedded-hal 1.0.0",
  "embedded-hal-async",
  "embedded-hal-bus",
  "embedded-io",
